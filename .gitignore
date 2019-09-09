@@ -19,3 +19,9 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+# firebase cache
+.firebase/
+.firebase/*
+
+package-lock.json
