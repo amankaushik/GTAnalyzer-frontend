@@ -4,27 +4,25 @@
                 v-model="drawer"
                 app
                 clipped
+                class="deep-purple accent-2"
+                expand-on-hover
         >
             <v-list dense>
-                <v-list-item @click="toggleComponent('github')">
+                <v-list-item v-for="item of items" v-bind:key="item.itemTitleString" @click="toggleComponent(item.toggleString)">
                     <v-list-item-action>
                         <v-icon>mdi-view-dashboard</v-icon>
                     </v-list-item-action>
-                    <v-list-item-content>
-                        <v-list-item-title>GitHub</v-list-item-title>
-                    </v-list-item-content>
-                </v-list-item>
-                <v-list-item @click="toggleComponent('taiga')">
-                    <v-list-item-action>
-                        <v-icon>mdi-view-dashboard</v-icon>
-                    </v-list-item-action>
-                    <v-list-item-content>
-                        <v-list-item-title>Taiga</v-list-item-title>
-                    </v-list-item-content>
+                    <v-tooltip right>
+                        <template v-slot:activator="{ on }">
+                            <v-list-item-content v-on="on">
+                                <v-list-item-title>{{item.itemTitleString}}</v-list-item-title>
+                            </v-list-item-content>
+                        </template>
+                        <span>{{item.tooltipString}}</span>
+                    </v-tooltip>
                 </v-list-item>
             </v-list>
         </v-navigation-drawer>
-
         <v-app-bar
                 app
                 clipped-left
@@ -66,7 +64,39 @@
             return {
                 drawer: null,
                 activeComponent: GitHub,
-                activeComponentIsGitHub: true
+                activeComponentIsGitHub: true,
+                items: [
+                    {
+                        toggleString: 'github',
+                        itemTitleString: "GitHub - Analyze",
+                        tooltipString: "Perform New Analysis on GitHub Repositories"
+                    },
+                    {
+                        toggleString: "github",
+                        itemTitleString: "GitHub - Visualize",
+                        tooltipString: "Visualize old Analyses from File"
+                    },
+                    {
+                        toggleString: "github",
+                        itemTitleString: "GitHub - Create",
+                        tooltipString: "Creat new GitHub Repositories from File"
+                    },
+                    {
+                        toggleString: "taiga",
+                        itemTitleString: "Taiga - Analyze",
+                        tooltipString: "Perform New Analysis on Taiga Boards"
+                    },
+                    {
+                        toggleString: "taiga",
+                        itemTitleString: "Taiga - Visualize",
+                        tooltipString: "Visualize old Analyses from File"
+                    },
+                    {
+                        toggleString: "taiga",
+                        itemTitleString: "Taiga - Create",
+                        tooltipString: "Creat new Taiga Boards from File"
+                    }
+                ]
             }
         },
         methods: {

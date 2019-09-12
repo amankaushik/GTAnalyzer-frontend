@@ -22,27 +22,32 @@
                     </v-container>
                     <v-btn color="error" @click="stepNumber = decrement(stepNumber)" :disabled="stepNumber <= 1">Prev
                     </v-btn>
-                    <v-btn color="success" @click="stepNumber = increment(stepNumber)"
-                           :disabled="isVerified()">Next
+                    <v-btn color="success" @click="stepNumber = increment(stepNumber)" :disabled="isVerified()">Next
                     </v-btn>
                 </v-stepper-content>
                 <v-stepper-content step="2">
-                    <v-card
-                            class="mb-12"
-                            color="grey lighten-1"
-                            height="200px"
-                    ></v-card>
+                    <v-container :fluid=true class="grey lighten-5">
+                        <v-row justify="start">
+                            <v-col >
+                                    <list-repositories></list-repositories>
+                            </v-col>
+                        </v-row>
+                    </v-container>
                     <v-btn color="error" @click="stepNumber = decrement(stepNumber)">Prev</v-btn>
                     <v-btn color="success" @click="stepNumber = increment(stepNumber)"
                            :disabled="isVerified()">Next
                     </v-btn>
                 </v-stepper-content>
                 <v-stepper-content step="3">
-                    <v-card
-                            class="mb-12"
-                            color="grey lighten-1"
-                            height="200px"
-                    ></v-card>
+                    <v-container :fluid=true class="grey lighten-5">
+                        <v-row justify="start">
+                            <v-col md="4">
+                                <v-card class="grey lighten-5" outlined>
+                                    <analyze-repositories></analyze-repositories>
+                                </v-card>
+                            </v-col>
+                        </v-row>
+                    </v-container>
                     <v-btn color="error" @click="stepNumber = decrement(stepNumber)">Prev</v-btn>
                     <v-btn color="success" @click="">Analyze</v-btn>
                 </v-stepper-content>
@@ -54,11 +59,13 @@
 <script>
 
     import CredentialSubmit from "@/components/CredentialSubmit";
-    import {mapGetters} from 'vuex';
+    import ListRepositories from "@/components/ListRepositories";
+    import AnalyzeRepositories from "@/components/AnalyzeRepositories";
+    import {mapGetters, mapActions} from 'vuex';
 
     export default {
         name: 'github',
-        components: {CredentialSubmit},
+        components: {AnalyzeRepositories, CredentialSubmit, ListRepositories},
         data: function () {
             return {
                 stepNumber: 1,
@@ -69,8 +76,11 @@
             }
         },
         methods: {
+            ...mapActions('credentialStore',
+                ['setToken', 'setUsername', 'setVerified']),
             increment: function (step) {
                 this.setFromState();
+                this.setVerified(false); // disable the 'Next' button on the "next" page
                 if (step >= this.maxStepNumber)
                     return step;
                 return step + 1;
