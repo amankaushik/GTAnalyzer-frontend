@@ -18,5 +18,9 @@ export default {
     performFlightCheck(token, username) {
         return axiosClient.post('/ganalyzer/flightcheck/',
             {token:token, username:username})
+    },
+    getRepositoriesFromGitHub(token, username) {
+        return axiosClient.post('/ganalyzer/listrepository/',
+            {token:token, username:username})
     }
 }
