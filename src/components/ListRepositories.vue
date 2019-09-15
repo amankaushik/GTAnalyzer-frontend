@@ -57,6 +57,15 @@
             ></v-progress-circular>
         </div>
         <div v-if="!repositoryList.empty">
+            <v-text-field
+                    v-model="filterText"
+                    outlined
+                    clearable
+                    label="Search"
+                    type="text"
+                    @input="filterRepositoryList"
+            >
+            </v-text-field>
             <v-chip-group v-model="selectedRepositories" column multiple>
                 <v-chip filter outlined color="teal" v-for="repositoryName of repositoryList"
                         v-bind:key="repositoryName">
@@ -80,7 +89,8 @@
                 repositoryList: [],
                 files: [],
                 gettingData: false,
-                verified: false
+                verified: false,
+                filterText: ""
             }
         },
         computed: {
@@ -96,17 +106,26 @@
                 } else {
                     this.setVerifiedByValue(false)
                 }
-            }
+            },
         },
         methods: {
             ...mapActions('credentialStore',
                 ['setToken', 'setUsername', 'setVerified']),
             ...mapActions('repositoryDataStore',
-            ['setRepositoryList', 'setSelectedRepositories']),
+                ['setRepositoryList', 'setSelectedRepositories']),
             isFileUploaded: function () {
                 if (this.files === null || this.fiber.empty || this.files.length != 1)
                     return false;
                 return true;
+            },
+            filterRepositoryList: function () {
+                if (this.filterText === null) {
+                    this.repositoryList = this.getRepositoryList
+                } else {
+                    this.repositoryList = this.getRepositoryList.filter(repoName =>
+                        repoName.toLowerCase().includes(this.filterText.toLowerCase())
+                    )
+                }
             },
             getRepositoriesFromFile: function () {
                 console.log("getting repository data from file")
@@ -165,7 +184,3 @@
         }
     }
 </script>
-
-<style scoped>
-
-</style>

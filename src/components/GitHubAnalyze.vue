@@ -64,7 +64,7 @@
     import {mapGetters, mapActions} from 'vuex';
 
     export default {
-        name: 'github',
+        name: 'GitHubAnalyze',
         components: {AnalyzeRepositories, CredentialSubmit, ListRepositories},
         data: function () {
             return {

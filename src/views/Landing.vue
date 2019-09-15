@@ -8,7 +8,8 @@
                 expand-on-hover
         >
             <v-list dense>
-                <v-list-item v-for="item of items" v-bind:key="item.itemTitleString" @click="toggleComponent(item.toggleString)">
+                <v-list-item v-for="item of items" v-bind:key="item.itemTitleString"
+                             @click="toggleComponent(item.toggleID)">
                     <v-list-item-action>
                         <v-icon>mdi-view-dashboard</v-icon>
                     </v-list-item-action>
@@ -52,8 +53,12 @@
 </template>
 
 <script>
-    import GitHub from "@/components/GitHub";
-    import Taiga from "@/components/Taiga";
+    import GitHubAnalyze from "@/components/GitHubAnalyze";
+    import GitHubCreate from "@/components/GitHubCreate";
+    import GitHubVisualize from "@/components/GitHubVisualize";
+    import TaigaAnalyze from "@/components/TaigaAnalyze";
+    import TaigaCreate from "@/components/TaigaCreate";
+    import TaigaVisualize from "@/components/TaigaVisualize";
 
     export default {
         name: "landing",
@@ -63,52 +68,66 @@
         data: function () {
             return {
                 drawer: null,
-                activeComponent: GitHub,
+                defaultComponent: GitHubAnalyze,
+                activeComponent: GitHubAnalyze, // component to load on page load
+                activeComponentID: -1,
                 activeComponentIsGitHub: true,
                 items: [
                     {
-                        toggleString: 'github',
+                        toggleID: 101,
                         itemTitleString: "GitHub - Analyze",
-                        tooltipString: "Perform New Analysis on GitHub Repositories"
+                        tooltipString: "Perform New Analysis on GitHub Repositories",
+                        component: GitHubAnalyze
                     },
                     {
-                        toggleString: "github",
+                        toggleID: 102,
                         itemTitleString: "GitHub - Visualize",
-                        tooltipString: "Visualize old Analyses from File"
+                        tooltipString: "Visualize old Analyses from File",
+                        component: GitHubVisualize
+
                     },
                     {
-                        toggleString: "github",
+                        toggleID: 103,
                         itemTitleString: "GitHub - Create",
-                        tooltipString: "Creat new GitHub Repositories from File"
+                        tooltipString: "Creat new GitHub Repositories from File",
+                        component: GitHubCreate
                     },
                     {
-                        toggleString: "taiga",
+                        toggleID: 201,
                         itemTitleString: "Taiga - Analyze",
-                        tooltipString: "Perform New Analysis on Taiga Boards"
+                        tooltipString: "Perform New Analysis on Taiga Boards",
+                        component: TaigaAnalyze
                     },
                     {
-                        toggleString: "taiga",
+                        toggleID: 202,
                         itemTitleString: "Taiga - Visualize",
-                        tooltipString: "Visualize old Analyses from File"
+                        tooltipString: "Visualize old Analyses from File",
+                        component: TaigaVisualize
                     },
                     {
-                        toggleString: "taiga",
+                        toggleID: 203,
                         itemTitleString: "Taiga - Create",
-                        tooltipString: "Creat new Taiga Boards from File"
+                        tooltipString: "Creat new Taiga Boards from File",
+                        component: TaigaCreate
                     }
                 ]
             }
         },
         methods: {
             toggleComponent: function (source) {
-                if (source !== 'github' && this.activeComponentIsGitHub) {
-                    this.activeComponentIsGitHub = false;
-                    this.activeComponent = Taiga;
-                } else if (source === "github" && !(this.activeComponentIsGitHub)) {
-                    this.activeComponentIsGitHub = true;
-                    this.activeComponent = GitHub;
+                if (source === -1)
+                    return this.defaultComponent;
+                this.getComponentFromID(source);
+            },
+            getComponentFromID(id) {
+                for (let item of this.items) {
+                    if (item.toggleID === id) {
+                        this.activeComponent = item.component;
+                        return;
+                    }
                 }
+                this.activeComponent = this.defaultComponent;
             }
-        },
+        }
     }
-</script>k
+</script>
