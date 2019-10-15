@@ -9,7 +9,8 @@
         <v-text-field
                 v-model="token"
                 :error-messages="tokenErrors"
-                label="Token"
+                :type="'password'"
+                label="Token/Password"
                 required
         ></v-text-field>
         <v-btn class="mr-4" @click="submit">Submit</v-btn>
@@ -22,6 +23,7 @@
     import {required} from 'vuelidate/lib/validators'
     import {mapActions} from 'vuex';
     import githubService from "@/services/githubService";
+    import taigaService from "@/services/taigaService";
 
     export default {
         name: "CredentialSubmit",
@@ -30,6 +32,7 @@
             username: {required},
             token: {required},
         },
+        props: {caller: Object},
         data: () => ({
             username: '',
             token: '',
@@ -45,21 +48,32 @@
             tokenErrors() {
                 const errors = []
                 if (!this.$v.token.$dirty) return errors
-                !this.$v.token.required && errors.push('Token is required.')
+                !this.$v.token.required && errors.push('Token/Password is required.')
                 return errors
             }
         },
         methods: {
-            ...mapActions('credentialStore',
-                ['setToken', 'setUsername', 'setVerified']
+            ...mapActions('githubCredentialStore',
+                ['setToken', 'setUsername', 'setVerified'],
             ),
+            ...mapActions('taigaCredentialStore',
+                {setAuthToken: "setAuthToken", setPassword: "setPassword",
+                    setUserId: "setUserId", setTaigaUsername: "setUsername", setTaigaVerified:  "setVerified"}),
             submit() {
                 this.verified = false;
                 this.$v.$touch()
                 if (!this.$v.$invalid) {
-                    this.setToken(this.token);
-                    this.setUsername(this.username);
-                    this.performFlightCheck();
+                    if (this.caller.name === "github") {
+                        this.setToken(this.token);
+                        this.setUsername(this.username);
+                        this.performFlightCheck();
+                    } else if (this.caller.name === "taiga") {
+                        this.setPassword(this.token);
+                        this.setTaigaUsername(this.username);
+                        this.getAuthToken()
+                    } else {
+                        console.log("Invalid Caller!")
+                    }
                 }
             },
             clear() {
@@ -74,7 +88,17 @@
                         this.verified = true;
                         this.setVerified(this.verified)
                     }).catch(error => {
-                        console.log(error)
+                        console.log(error);
+                })
+            },
+            getAuthToken() {
+                taigaService.getAuthToken(this.username, this.token)
+                    .then(response => {
+                        this.verified = true;
+                        this.setAuthToken(response.data.auth_token);
+                        this.setTaigaVerified(this.verified);
+                    }).catch(error => {
+                        console.log(error);
                 })
             }
         }

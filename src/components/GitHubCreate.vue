@@ -2,7 +2,7 @@
     <v-container class="grey lighten-5">
         <v-row justify="space-around">
             <v-col>
-                <credential-submit></credential-submit>
+                <credential-submit v-bind:caller="{name: 'github'}" ></credential-submit>
             </v-col>
             <v-col v-if="isVerified()">
                 <v-form>
@@ -88,7 +88,7 @@
         },
         computed: {
             ...mapGetters('centralStore', ['getUploadedFile']),
-            ...mapGetters('credentialStore', ['getToken', 'getUsername', 'getVerified']),
+            ...mapGetters('githubCredentialStore', ['getToken', 'getUsername', 'getVerified']),
         },
         filters: {
             nullToText: function (element) {

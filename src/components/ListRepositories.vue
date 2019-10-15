@@ -94,7 +94,7 @@
             }
         },
         computed: {
-            ...mapGetters('credentialStore', ['getToken', 'getUsername', 'getVerified']),
+            ...mapGetters('githubCredentialStore', ['getToken', 'getUsername', 'getVerified']),
             ...mapGetters('repositoryDataStore', ['getRepositoryList', 'getSelectedRepositories']),
         },
         watch: {

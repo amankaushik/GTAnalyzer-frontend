@@ -15,7 +15,7 @@
                         <v-row justify="start">
                             <v-col md="4">
                                 <v-card class="grey lighten-5" outlined>
-                                    <credential-submit></credential-submit>
+                                    <credential-submit v-bind:caller="{name: 'github'}" ></credential-submit>
                                 </v-card>
                             </v-col>
                         </v-row>
@@ -76,7 +76,7 @@
             }
         },
         methods: {
-            ...mapActions('credentialStore',
+            ...mapActions('githubCredentialStore',
                 ['setToken', 'setUsername', 'setVerified']),
             increment: function (step) {
                 this.setFromState();
@@ -99,7 +99,7 @@
             }
         },
         computed: {
-            ...mapGetters('credentialStore', ['getToken', 'getUsername', 'getVerified']),
+            ...mapGetters('githubCredentialStore', ['getToken', 'getUsername', 'getVerified']),
         }
     }
 </script>
