@@ -9,24 +9,24 @@ const axiosClient = axios.create(
         baseURL: "http://127.0.0.1:8000/api/v1",
         withCredentials: false,
         headers: {
-            Accept: 'application/json',
+            Accept: '*/*',
             'Content-Type': 'application/json'
         }
     }
 )
 
 export default {
-    performFlightCheck(token, username) {
-        return axiosClient.post('/ganalyzer/flightcheck/',
-            {token: token, username: username})
+    getAuthToken(username, password) {
+        return axiosClient.post('/tanalyzer/getauthtoken/',
+            {password: password, username: username})
     },
-    getRepositoriesFromGitHub(token, username) {
-        return axiosClient.post('/ganalyzer/listrepository/',
-            {token: token, username: username})
+    getBoardList(userId, authToken) {
+        return axiosClient.post('/tanalyzer/getboardlist/',
+            {auth_token: authToken, user_id: userId})
     },
-    createRepositoryFromFile(data) {
+    createBoardFromFile(data) {
         return axiosClient.post(
-            '/ganalyzer/createrepository/',
+            '/tanalyzer/createboard/',
             data
         )
     }
