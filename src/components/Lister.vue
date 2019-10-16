@@ -11,11 +11,11 @@
                                         <v-tooltip bottom>
                                             <template v-slot:activator="{ on }">
                                                 <v-btn color="primary" dark v-on="on"
-                                                       @click="getRepositoriesFromGitHub">
-                                                    Get Repositories
+                                                       @click="getEntitiesFromSource">
+                                                    Get Repositories/Boards
                                                 </v-btn>
                                             </template>
-                                            <span>Get Repositories from GitHub</span>
+                                            <span>Get Repositories from GitHub/ Get Board from Taiga</span>
                                         </v-tooltip>
                                     </v-col>
                                 </v-row>
@@ -40,7 +40,7 @@
                                     </v-file-input>
                                     <v-divider vertical class="mx-2"></v-divider>
                                     <v-btn :disabled="!(isFileUploaded)" color="success"
-                                           @click="getRepositoriesFromFile">
+                                           @click="getEntitiesFromFile">
                                         Submit
                                     </v-btn>
                                 </v-row>
@@ -56,20 +56,20 @@
                     color="purple"
             ></v-progress-circular>
         </div>
-        <div v-if="!repositoryList.empty">
+        <div v-if="!entityList.empty">
             <v-text-field
                     v-model="filterText"
                     outlined
                     clearable
                     label="Search"
                     type="text"
-                    @input="filterRepositoryList"
+                    @input="filterEntityList"
             >
             </v-text-field>
-            <v-chip-group v-model="selectedRepositories" column multiple>
-                <v-chip filter outlined color="teal" v-for="repositoryName of repositoryList"
-                        v-bind:key="repositoryName">
-                    {{repositoryName}}
+            <v-chip-group v-model="selectedEntities" column multiple>
+                <v-chip filter outlined color="teal" v-for="entityName of entityList"
+                        v-bind:key="entityName">
+                    {{entityName}}
                 </v-chip>
             </v-chip-group>
         </div>
@@ -79,56 +79,61 @@
 
 <script>
     import githubService from "@/services/githubService";
-    import {mapActions, mapGetters} from "vuex";
+    import taigaService from "@/services/taigaService";
+    import {listerStrategyMixin} from "@/mixins/listerStrategyMixin";
+    import {mapGetters} from "vuex";
 
     export default {
-        name: "ListRepositories",
+        name: "Lister",
         data: function () {
             return {
-                selectedRepositories: [],
-                repositoryList: [],
+                selectedEntities: [],
+                entityList: [],
                 files: [],
                 gettingData: false,
                 verified: false,
                 filterText: ""
             }
         },
-        computed: {
-            ...mapGetters('githubCredentialStore', ['getToken', 'getUsername', 'getVerified']),
-            ...mapGetters('repositoryDataStore', ['getRepositoryList', 'getSelectedRepositories']),
-        },
+        mixins: [listerStrategyMixin],
+        props: {caller: Object},
         watch: {
             // Enable/Disable "Next" button and update the central state of selectedRepositories
-            selectedRepositories: function () {
-                this.setSelectedRepositories(this.selectedRepositories)
-                if (this.selectedRepositories.length) { // any repository is selected
-                    this.setVerifiedByValue(true)
-                } else {
-                    this.setVerifiedByValue(false)
+            selectedEntities: function () {
+                let strategyManager = new this.StrategyManager(this.caller.name)
+                let strategy = strategyManager.strategy
+                strategy.setSelectedEntities(this.selectedEntities)
+                this.verified = false
+                if (this.selectedEntities.length) { // any repository is selected
+                    this.verified = true;
                 }
+                strategy.setVerified(this.verified)
             },
         },
+        computed: {
+            ...mapGetters('taigaCredentialStore', ["getAuthToken", "getUserId"]),
+        },
         methods: {
-            ...mapActions('credentialStore',
-                ['setToken', 'setUsername', 'setVerified']),
-            ...mapActions('repositoryDataStore',
-                ['setRepositoryList', 'setSelectedRepositories']),
             isFileUploaded: function () {
                 if (this.files === null || this.fiber.empty || this.files.length != 1)
                     return false;
                 return true;
             },
-            filterRepositoryList: function () {
+            filterEntityList: function () {
+                let strategyManager = new this.StrategyManager(this.caller.name)
+                let strategy = strategyManager.strategy
                 if (this.filterText === null) {
-                    this.repositoryList = this.getRepositoryList
+                    this.EntityList = strategy.getEntityList()
                 } else {
-                    this.repositoryList = this.getRepositoryList.filter(repoName =>
-                        repoName.toLowerCase().includes(this.filterText.toLowerCase())
+                    this.EntityList = strategy.getEntityList.filter(name =>
+                        name.toLowerCase().includes(this.filterText.toLowerCase())
                     )
                 }
             },
-            getRepositoriesFromFile: function () {
-                console.log("getting repository data from file")
+            getEntitiesFromFile: function () {
+                console.log("getting entity data from file")
+                let strategyManager = new this.StrategyManager(this.caller.name)
+                let strategy = strategyManager.strategy
                 let vueThis = this
                 if (this.files && this.files.length != 0) {
                     this.performPreFetchSteps()
@@ -140,47 +145,67 @@
                             this.fileContent = this.fileContent.slice(1)  // remove header
                             for (let line of this.fileContent) {
                                 line = line.split(",")  // convert content sting to lines/list
-                                vueThis.repositoryList.push(line[0])
+                                vueThis.entityList.push(line[0])
                             }
-                            vueThis.setRepositoryList(vueThis.repositoryList) // update central state
+                            strategy.setEntityList(vueThis.entityList) // update central state
                             vueThis.gettingData = false; // hide progress circle
                         }
                     }
                     reader.readAsText(this.files);
                 }
             },
-            getRepositoriesFromGitHub: function () {
-                console.log("getting repository data from GitHub")
+            getEntitiesFromSource: function () {
+                console.log("getting entity data from Source")
+                let strategyManager = new this.StrategyManager(this.caller.name)
+                let strategy = strategyManager.strategy
                 this.performPreFetchSteps()
                 let vueThis = this;
-                githubService.getRepositoriesFromGitHub(this.getToken, this.getUsername)
-                    .then(response => {
-                        vueThis.repositoryList = this.extractRepositoryData(response.data)
+                if (this.caller.name === "github") {
+                    githubService.getRepositoriesFromGitHub(this.getToken, this.getUsername)
+                        .then(response => {
+                            vueThis.entityList = this.extractRepositoryData(response.data)
+                            vueThis.gettingData = false; // hide progress circle
+                            strategy.setEntityList(vueThis.entityList) // update central state
+                        }).catch(error => {
+                        console.log(error)
                         vueThis.gettingData = false; // hide progress circle
-                        vueThis.setRepositoryList(vueThis.repositoryList) // update central state
-                    }).catch(error => {
-                    console.log(error)
-                    vueThis.gettingData = false; // hide progress circle
-                })
+                    })
+                } else if (this.caller.name === "taiga") {
+                    taigaService.getBoardList(this.getUserId, this.getAuthToken)
+                        .then(response => {
+                            vueThis.entityList = this.extractBoardData(response.data)
+                            vueThis.gettingData = false; // hide progress circle
+                            strategy.setEntityList(vueThis.entityList) // update central state
+                        }).catch(error => {
+                        console.log(error)
+                        vueThis.gettingData = false; // hide progress circle
+                    })
+                }
             },
             extractRepositoryData: function (repositoryList) {
-                let repoNames = []
+                let repoNames = [];
                 for (let repo of repositoryList) {
-                    repoNames.push(repo.name)
+                    repoNames.push(repo.name);
                 }
-                return repoNames
+                return repoNames;
+            },
+            extractBoardData: function (boardList) {
+                let boardNames = [];
+                for (let board of boardList) {
+                    boardNames.push(board.name);
+                }
+                return boardNames;
             },
             performPreFetchSteps: function () {
-                this.repositoryList = []
-                this.setRepositoryList(this.repositoryList) // update central state
+                let strategyManager = new this.StrategyManager(this.caller.name)
+                let strategy = strategyManager.strategy
+                this.entityList = []
+                strategy.setEntityList(this.entityList) // update central state
                 // disable 'Next' every time repositories are reloaded
-                this.setVerifiedByValue(false); // disable 'Next' till the results are fetched
+                this.verified = false;
+                strategy.setVerified(this.verified)
                 this.gettingData = true; // display progress circle
             },
-            setVerifiedByValue: function (value) {
-                this.verified = value;
-                this.setVerified(this.verified)
-            }
         }
     }
 </script>

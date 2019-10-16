@@ -96,6 +96,7 @@
                     .then(response => {
                         this.verified = true;
                         this.setAuthToken(response.data.auth_token);
+                        this.setUserId(response.data.id);
                         this.setTaigaVerified(this.verified);
                     }).catch(error => {
                         console.log(error);

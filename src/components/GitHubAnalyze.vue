@@ -29,7 +29,7 @@
                     <v-container :fluid=true class="grey lighten-5">
                         <v-row justify="start">
                             <v-col >
-                                    <list-repositories></list-repositories>
+                                    <lister v-bind:caller="{name: 'github'}"></lister>
                             </v-col>
                         </v-row>
                     </v-container>
@@ -59,13 +59,13 @@
 <script>
 
     import CredentialSubmit from "@/components/CredentialSubmit";
-    import ListRepositories from "@/components/ListRepositories";
+    import Lister from "@/components/Lister";
     import AnalyzeRepositories from "@/components/AnalyzeRepositories";
     import {mapGetters, mapActions} from 'vuex';
 
     export default {
         name: 'GitHubAnalyze',
-        components: {AnalyzeRepositories, CredentialSubmit, ListRepositories},
+        components: {AnalyzeRepositories, CredentialSubmit, Lister},
         data: function () {
             return {
                 stepNumber: 1,
