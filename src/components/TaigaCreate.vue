@@ -45,8 +45,8 @@
                     </v-expansion-panel-header>
                     <v-expansion-panel-content>
                         <div v-if="entry.showFailure">
-                            <span><b> Board Creation Failed: </b>{{entry.failed}}</span><br/>
-                            <span><b> Board Creation Failure Reason: </b>{{entry.reason}}</span><br/>
+                            <span><b> Board-Flow Creation Failed: </b>{{entry.failed}}</span><br/>
+                            <span><b> Board-Flow Creation Failure Reason: </b>{{entry.reason}}</span><br/>
                         </div>
                         <v-divider></v-divider>
                         <div>
@@ -67,6 +67,7 @@
     import CredentialSubmit from "@/components/CredentialSubmit";
     import {mapGetters} from "vuex";
     import taigaService from "@/services/taigaService";
+    import {csvFileParserMixin} from "@/mixins/csvFileParserMixin";
 
     export default {
         name: "TaigaCreate",
@@ -81,6 +82,7 @@
                 active: []
             }
         },
+        mixins: [csvFileParserMixin],
         computed: {
             ...mapGetters('centralStore', ['getUploadedFile']),
             ...mapGetters('taigaCredentialStore', ['getAuthToken', 'getUsername',
@@ -147,12 +149,7 @@
                     reader.onloadend = function (event) {
                         if (event.target.readyState === FileReader.DONE) {
                             this.fileContent = event.target.result
-                            this.fileContent = this.fileContent.split("\n")  // convert content sting to lines/list
-                            this.fileContent = this.fileContent.slice(1)  // remove header
-                            for (let line of this.fileContent) {
-                                line = line.split(",")  // convert content sting to list
-                                vueThis.lines.push(line.map(item => item.trim(" ")))
-                            }
+                            vueThis.lines = vueThis.parseCSVFile(this.fileContent)
                             const data = vueThis.createPayload(vueThis.lines)
                             taigaService.createBoardFromFile(data)
                                 .then(response => {
@@ -173,8 +170,9 @@
                     data["auth_token"] = this.getAuthToken;
                     data["is_private"] = false;  // always create a public board
                     data["project_name"] = line[0];
-                    data["project_description"] = line[1];
-                    data["members"] = line.slice(2);
+                    // Assumption: No 'project description' is provided in the CSV file.
+                    data["project_description"] = line[0];
+                    data["members"] = line.slice(1);
                     payload.push(data);
                 }
                 console.log(payload);

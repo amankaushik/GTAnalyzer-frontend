@@ -5,8 +5,7 @@ axios.defaults.xsrfCookieName = 'csrftoken'
 
 const axiosClient = axios.create(
     {
-        // baseURL: "https://gtanalyzer.herokuapp.com/api/v1",
-        baseURL: "http://127.0.0.1:8000/api/v1",
+        baseURL: process.env.VUE_APP_BASE_API,
         withCredentials: false,
         headers: {
             Accept: '*/*',
