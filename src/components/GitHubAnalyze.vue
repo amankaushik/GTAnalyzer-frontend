@@ -15,7 +15,7 @@
                         <v-row justify="start">
                             <v-col md="4">
                                 <v-card class="grey lighten-5" outlined>
-                                    <credential-submit v-bind:caller="{name: 'github'}" ></credential-submit>
+                                    <credential-submit v-bind:caller="{name: githubCaller}" ></credential-submit>
                                 </v-card>
                             </v-col>
                         </v-row>
@@ -29,7 +29,7 @@
                     <v-container :fluid=true class="grey lighten-5">
                         <v-row justify="start">
                             <v-col >
-                                    <lister v-bind:caller="{name: 'github'}"></lister>
+                                    <lister v-bind:caller="{name: githubCaller}"></lister>
                             </v-col>
                         </v-row>
                     </v-container>
@@ -72,7 +72,8 @@
                 maxStepNumber: 3,
                 minStepNumber: 1,
                 username: '',
-                token: ''
+                token: '',
+                githubCaller: process.env.VUE_APP_CALLER_GITHUB,
             }
         },
         methods: {

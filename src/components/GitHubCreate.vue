@@ -45,9 +45,10 @@
                     </v-expansion-panel-header>
                     <v-expansion-panel-content>
                         <div v-if="entry.showFailure">
-                            <span><b> Repo Creation Failed: </b>{{entry.failed}}</span><br/>
-                            <span><b> Repo Creation Failure Reason: </b>{{entry.reason}}</span><br/>
-                            <span><b> Repo Creation Failure Step: </b>{{entry.failureStep}}</span><br/>
+                            <span><b> Repo-Flow Creation Failed: </b>{{entry.failed}}</span><br/>
+                            <span><b> Repo-Flow Creation - Repo Created: </b>{{entry.repoCreated}}</span><br/>
+                            <span><b> Repo-Flow Creation Failure Reason: </b>{{entry.reason}}</span><br/>
+                            <span><b> Repo-Flow Creation Failure Step: </b>{{entry.failureStep}}</span><br/>
                         </div>
                         <v-divider></v-divider>
                         <div>
@@ -56,9 +57,9 @@
                         <v-divider></v-divider>
                         <div>
                             <h6> Collaborators </h6>
-                            <v-chip v-for="item of entry.collaborators" :key="item.name"
+                            <v-chip v-for="item of entry.collaborators" :key="item.name + Math.random().toString()"
                                     :color="getPanelChipColor(item.failed)">
-                                {{item.name}}
+                                {{item.name | handleEmptyName}}
                             </v-chip>
                         </div>
                     </v-expansion-panel-content>
@@ -72,6 +73,7 @@
     import CredentialSubmit from "@/components/CredentialSubmit";
     import githubService from "@/services/githubService";
     import {mapGetters} from "vuex";
+    import {csvFileParserMixin} from "@/mixins/csvFileParserMixin";
 
     export default {
         name: "GitHubCreate",
@@ -95,8 +97,15 @@
                 if (element === null)
                     return "N/A";
                 return element;
+            },
+            handleEmptyName: function (name) {
+                if (name.trim(" ")) {
+                    return name;
+                }
+                return "No-Name-Provided";
             }
         },
+        mixins: [csvFileParserMixin],
         methods: {
             isVerified: function () {
                 return this.getVerified;
@@ -108,6 +117,7 @@
                     panelData[repo["repo_name"]] = repoDict;
                     repoDict["name"] = repo["repo_name"];
                     repoDict["showFailure"] = false;
+                    repoDict["repoCreated"] = repo["repo_created"];
                     if (repo.hasOwnProperty("failed")) {
                         repoDict["showFailure"] = true;
                         repoDict["failed"] = repo["failed"];
@@ -125,7 +135,9 @@
                                 }
                             );
                             if (collaborator.failed) {  // Even if there is one failure, indicate failure
-                                repoDict["failure"] = true;
+                                repoDict["showFailure"] = true;
+                                repoDict["failed"] = collaborator.failed;
+                                repoDict["failureStep"] = "Collaborator Addition";
                             }
                         }
                     }
@@ -155,13 +167,8 @@
                     const data = {};
                     reader.onloadend = function (event) {
                         if (event.target.readyState === FileReader.DONE) {
-                            this.fileContent = event.target.result
-                            this.fileContent = this.fileContent.split("\n")  // convert content sting to lines/list
-                            this.fileContent = this.fileContent.slice(1)  // remove header
-                            for (let line of this.fileContent) {
-                                line = line.split(",")  // convert content sting to lines/list
-                                vueThis.lines.push(line)
-                            }
+                            this.fileContent = event.target.result;
+                            vueThis.lines = vueThis.parseCSVFile(this.fileContent);
                             data["token"] = vueThis.getToken;
                             data["username"] = vueThis.getUsername;
                             data["content"] = vueThis.lines;

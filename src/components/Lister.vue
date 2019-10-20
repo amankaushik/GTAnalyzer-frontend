@@ -78,10 +78,8 @@
 </template>
 
 <script>
-    import githubService from "@/services/githubService";
-    import taigaService from "@/services/taigaService";
     import {listerStrategyMixin} from "@/mixins/listerStrategyMixin";
-    import {mapGetters} from "vuex";
+    import {csvFileParserMixin} from "@/mixins/csvFileParserMixin";
 
     export default {
         name: "Lister",
@@ -95,7 +93,7 @@
                 filterText: ""
             }
         },
-        mixins: [listerStrategyMixin],
+        mixins: [listerStrategyMixin, csvFileParserMixin],
         props: {caller: Object},
         watch: {
             // Enable/Disable "Next" button and update the central state of selectedRepositories
@@ -110,9 +108,6 @@
                 strategy.setVerified(this.verified)
             },
         },
-        computed: {
-            ...mapGetters('taigaCredentialStore', ["getAuthToken", "getUserId"]),
-        },
         methods: {
             isFileUploaded: function () {
                 if (this.files === null || this.fiber.empty || this.files.length != 1)
@@ -123,28 +118,25 @@
                 let strategyManager = new this.StrategyManager(this.caller.name)
                 let strategy = strategyManager.strategy
                 if (this.filterText === null) {
-                    this.EntityList = strategy.getEntityList()
+                    this.entityList = strategy.getEntityList()
                 } else {
-                    this.EntityList = strategy.getEntityList.filter(name =>
+                    this.entityList = strategy.getEntityList().filter(name =>
                         name.toLowerCase().includes(this.filterText.toLowerCase())
                     )
                 }
             },
             getEntitiesFromFile: function () {
-                console.log("getting entity data from file")
                 let strategyManager = new this.StrategyManager(this.caller.name)
                 let strategy = strategyManager.strategy
                 let vueThis = this
                 if (this.files && this.files.length != 0) {
-                    this.performPreFetchSteps()
+                    this.performPreFetchSteps(strategy)
                     const reader = new FileReader();
                     reader.onloadend = function (event) {
                         if (event.target.readyState === FileReader.DONE) {
                             this.fileContent = event.target.result
-                            this.fileContent = this.fileContent.split("\n")  // convert content sting to lines/list
-                            this.fileContent = this.fileContent.slice(1)  // remove header
+                            this.fileContent = vueThis.parseCSVFile(this.fileContent)
                             for (let line of this.fileContent) {
-                                line = line.split(",")  // convert content sting to lines/list
                                 vueThis.entityList.push(line[0])
                             }
                             strategy.setEntityList(vueThis.entityList) // update central state
@@ -155,50 +147,28 @@
                 }
             },
             getEntitiesFromSource: function () {
-                console.log("getting entity data from Source")
                 let strategyManager = new this.StrategyManager(this.caller.name)
                 let strategy = strategyManager.strategy
-                this.performPreFetchSteps()
+                this.performPreFetchSteps(strategy)
                 let vueThis = this;
-                if (this.caller.name === "github") {
-                    githubService.getRepositoriesFromGitHub(this.getToken, this.getUsername)
+                strategy.serviceGetter(strategy.getUser(), strategy.getToken())
                         .then(response => {
-                            vueThis.entityList = this.extractRepositoryData(response.data)
+                            vueThis.entityList = this.extractEntityData(response.data)
                             vueThis.gettingData = false; // hide progress circle
                             strategy.setEntityList(vueThis.entityList) // update central state
                         }).catch(error => {
                         console.log(error)
                         vueThis.gettingData = false; // hide progress circle
                     })
-                } else if (this.caller.name === "taiga") {
-                    taigaService.getBoardList(this.getUserId, this.getAuthToken)
-                        .then(response => {
-                            vueThis.entityList = this.extractBoardData(response.data)
-                            vueThis.gettingData = false; // hide progress circle
-                            strategy.setEntityList(vueThis.entityList) // update central state
-                        }).catch(error => {
-                        console.log(error)
-                        vueThis.gettingData = false; // hide progress circle
-                    })
-                }
             },
-            extractRepositoryData: function (repositoryList) {
-                let repoNames = [];
-                for (let repo of repositoryList) {
-                    repoNames.push(repo.name);
+            extractEntityData: function (entityList) {
+                let entityNames = [];
+                for (let entity of entityList) {
+                    entityNames.push(entity.name);
                 }
-                return repoNames;
+                return entityNames;
             },
-            extractBoardData: function (boardList) {
-                let boardNames = [];
-                for (let board of boardList) {
-                    boardNames.push(board.name);
-                }
-                return boardNames;
-            },
-            performPreFetchSteps: function () {
-                let strategyManager = new this.StrategyManager(this.caller.name)
-                let strategy = strategyManager.strategy
+            performPreFetchSteps: function (strategy) {
                 this.entityList = []
                 strategy.setEntityList(this.entityList) // update central state
                 // disable 'Next' every time repositories are reloaded
