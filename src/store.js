@@ -4,6 +4,7 @@ import githubCredentialStore from "@/store/githubCredentialStore";
 import taigaCredentialStore from "@/store/taigaCredentialStore";
 import repositoryDataStore from "@/store/repositoryDataStore";
 import boardDataStore from "@/store/boardDataStore";
+import taigaSprintDataStore from "@/store/taigaSprintDataStore";
 import centralStore from "@/store/centralStore";
 
 Vue.use(Vuex)
@@ -15,6 +16,7 @@ export default new Vuex.Store({
         taigaCredentialStore,
         repositoryDataStore,
         boardDataStore,
+        taigaSprintDataStore,
         centralStore
     },
 })

@@ -1,6 +1,6 @@
 export const csvFileParserMixin = {
    methods: {
-       parseCSVFile: function (file) {
+       parseCSVFile: function (file, key_index, value_index) {
            let fileContentList = file.split("\n");  // convert content sting to lines/list
            let fileContentListRem = fileContentList.slice(1);  // remove header
            let contentMap = new Map();
@@ -8,8 +8,8 @@ export const csvFileParserMixin = {
            // Assumption 2: Second column is 'github-id' and last column is 'repo-name'
            for (let line of fileContentListRem) {
                line = line.split(",");  // convert content sting to lines/list
-               let key = line[3].trim();
-               let value = line[1];
+               let key = line[key_index].trim();
+               let value = line[value_index];
                if (contentMap.has(key)) {  // repo-name exits in map
                    contentMap.set(key, contentMap.get(key).concat(value));
                } else {

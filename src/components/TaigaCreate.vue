@@ -126,7 +126,6 @@
                             }
                         }
                     }
-
                 }
                 return panelData;
             },
@@ -149,7 +148,7 @@
                     reader.onloadend = function (event) {
                         if (event.target.readyState === FileReader.DONE) {
                             this.fileContent = event.target.result
-                            vueThis.lines = vueThis.parseCSVFile(this.fileContent)
+                            vueThis.lines = vueThis.parseCSVFile(this.fileContent, 3, 1)
                             const data = vueThis.createPayload(vueThis.lines)
                             taigaService.createBoardFromFile(data)
                                 .then(response => {

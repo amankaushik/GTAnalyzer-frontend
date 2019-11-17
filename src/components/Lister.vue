@@ -67,8 +67,8 @@
             >
             </v-text-field>
             <v-chip-group v-model="selectedEntities" column multiple>
-                <v-chip filter outlined color="teal" v-for="entityName of entityList"
-                        v-bind:key="entityName">
+                <v-chip filter outlined color="teal" v-for="(entityName, index) of entityList"
+                        v-bind:key="index">
                     {{entityName}}
                 </v-chip>
             </v-chip-group>
@@ -100,7 +100,12 @@
             selectedEntities: function () {
                 let strategyManager = new this.StrategyManager(this.caller.name)
                 let strategy = strategyManager.strategy
-                strategy.setSelectedEntities(this.selectedEntities)
+                let selectedEntityNames = [];
+                // selectedEntities hold the index of the selected chip
+                for (let index of this.selectedEntities) {
+                    selectedEntityNames.push(strategy.getEntityList()[index]);
+                }
+                strategy.setSelectedEntities(selectedEntityNames);
                 this.verified = false
                 if (this.selectedEntities.length) { // any repository is selected
                     this.verified = true;
@@ -126,38 +131,38 @@
                 }
             },
             getEntitiesFromFile: function () {
-                let strategyManager = new this.StrategyManager(this.caller.name)
-                let strategy = strategyManager.strategy
-                let vueThis = this
-                if (this.files && this.files.length != 0) {
-                    this.performPreFetchSteps(strategy)
+                let strategyManager = new this.StrategyManager(this.caller.name);
+                let strategy = strategyManager.strategy;
+                let vueThis = this;
+                if (this.files && this.files.length !== 0) {
+                    this.performPreFetchSteps(strategy);
                     const reader = new FileReader();
                     reader.onloadend = function (event) {
                         if (event.target.readyState === FileReader.DONE) {
-                            this.fileContent = event.target.result
-                            this.fileContent = vueThis.parseCSVFile(this.fileContent)
+                            this.fileContent = event.target.result;
+                            this.fileContent = vueThis.parseCSVFile(this.fileContent, 3, 1);
                             for (let line of this.fileContent) {
                                 vueThis.entityList.push(line[0])
                             }
-                            strategy.setEntityList(vueThis.entityList) // update central state
+                            strategy.setEntityList(vueThis.entityList); // update central state
                             vueThis.gettingData = false; // hide progress circle
                         }
-                    }
+                    };
                     reader.readAsText(this.files);
                 }
             },
             getEntitiesFromSource: function () {
-                let strategyManager = new this.StrategyManager(this.caller.name)
-                let strategy = strategyManager.strategy
-                this.performPreFetchSteps(strategy)
+                let strategyManager = new this.StrategyManager(this.caller.name);
+                let strategy = strategyManager.strategy;
+                this.performPreFetchSteps(strategy);
                 let vueThis = this;
                 strategy.serviceGetter(strategy.getUser(), strategy.getToken())
                         .then(response => {
-                            vueThis.entityList = this.extractEntityData(response.data)
+                            vueThis.entityList = this.extractEntityData(response.data);
                             vueThis.gettingData = false; // hide progress circle
                             strategy.setEntityList(vueThis.entityList) // update central state
                         }).catch(error => {
-                        console.log(error)
+                        console.log(error);
                         vueThis.gettingData = false; // hide progress circle
                     })
             },

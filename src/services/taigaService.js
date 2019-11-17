@@ -28,5 +28,9 @@ export default {
             '/tanalyzer/createboard/',
             data
         )
+    },
+    getMilestones(authToken, boardName) {
+        return axiosClient.post('/tanalyzer/milestones/',
+            {auth_token: authToken, name: boardName})
     }
 }

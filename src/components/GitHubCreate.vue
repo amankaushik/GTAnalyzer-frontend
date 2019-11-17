@@ -168,7 +168,7 @@
                     reader.onloadend = function (event) {
                         if (event.target.readyState === FileReader.DONE) {
                             this.fileContent = event.target.result;
-                            vueThis.lines = vueThis.parseCSVFile(this.fileContent);
+                            vueThis.lines = vueThis.parseCSVFile(this.fileContent, 3, 1);
                             data["token"] = vueThis.getToken;
                             data["username"] = vueThis.getUsername;
                             data["content"] = vueThis.lines;

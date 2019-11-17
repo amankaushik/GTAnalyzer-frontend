@@ -6,7 +6,9 @@
                 <v-divider></v-divider>
                 <v-stepper-step :complete="stepNumber > 2" step="2">Select Repositories</v-stepper-step>
                 <v-divider></v-divider>
-                <v-stepper-step step="3">Perform Analysis</v-stepper-step>
+                <v-stepper-step :complete="stepNumber > 3" step="3">Pick Date Range</v-stepper-step>
+                <v-divider></v-divider>
+                <v-stepper-step step="4">Perform Analysis</v-stepper-step>
             </v-stepper-header>
 
             <v-stepper-items>
@@ -15,7 +17,7 @@
                         <v-row justify="start">
                             <v-col md="4">
                                 <v-card class="grey lighten-5" outlined>
-                                    <credential-submit v-bind:caller="{name: githubCaller}" ></credential-submit>
+                                    <credential-submit v-bind:caller="{name: githubCaller}"></credential-submit>
                                 </v-card>
                             </v-col>
                         </v-row>
@@ -28,8 +30,8 @@
                 <v-stepper-content step="2">
                     <v-container :fluid=true class="grey lighten-5">
                         <v-row justify="start">
-                            <v-col >
-                                    <lister v-bind:caller="{name: githubCaller}"></lister>
+                            <v-col>
+                                <lister v-bind:caller="{name: githubCaller}"></lister>
                             </v-col>
                         </v-row>
                     </v-container>
@@ -39,6 +41,19 @@
                     </v-btn>
                 </v-stepper-content>
                 <v-stepper-content step="3">
+                    <v-container :fluid=true class="grey lighten-5">
+                        <v-row justify="start">
+                            <v-col>
+                                <DateRangeSelector v-bind:caller="{name: githubCaller}"></DateRangeSelector>
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                    <v-btn color="error" @click="stepNumber = decrement(stepNumber)">Prev</v-btn>
+                    <v-btn color="success" @click="stepNumber = increment(stepNumber)"
+                           :disabled="isVerified()">Next
+                    </v-btn>
+                </v-stepper-content>
+                <v-stepper-content step="4">
                     <v-container :fluid=true class="grey lighten-5">
                         <v-row justify="start">
                             <v-col md="4">
@@ -59,17 +74,18 @@
 <script>
 
     import CredentialSubmit from "@/components/CredentialSubmit";
+    import DateRangeSelector from "@/components/DateRangeSelector";
     import Lister from "@/components/Lister";
     import AnalyzeRepositories from "@/components/AnalyzeRepositories";
     import {mapGetters, mapActions} from 'vuex';
 
     export default {
         name: 'GitHubAnalyze',
-        components: {AnalyzeRepositories, CredentialSubmit, Lister},
+        components: {DateRangeSelector, AnalyzeRepositories, CredentialSubmit, Lister},
         data: function () {
             return {
                 stepNumber: 1,
-                maxStepNumber: 3,
+                maxStepNumber: 4,
                 minStepNumber: 1,
                 username: '',
                 token: '',
