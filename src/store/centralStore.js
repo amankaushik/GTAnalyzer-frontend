@@ -2,7 +2,8 @@ export default {
     namespaced: true,
     state: {
         uploadedFileContent: null,
-        uploadedFile: null
+        uploadedFile: null,
+        GHPayload: {}
     },
     getters: {
         getUploadedFileContent: state => {
@@ -10,7 +11,10 @@ export default {
         },
         getUploadedFile: state => {
             return state.uploadedFile;
-        }
+        },
+        getGHPayload: state => {
+            return state.GHPayload;
+        },
     },
     actions: {
         setUploadedFileContent: ({commit}, payload) => {
@@ -18,6 +22,9 @@ export default {
         },
         setUploadedFile: ({commit}, payload) => {
             commit('setUploadedFile', payload);
+        },
+        setGHPayload: ({commit}, payload) => {
+            commit('setGHPayload', payload);
         }
     },
     mutations: {
@@ -26,6 +33,9 @@ export default {
         },
         setUploadedFile: (state, value) => {
             state.uploadedFile = value
+        },
+        setGHPayload: (state, value) => {
+            state.GHPayload = value
         }
     }
 };

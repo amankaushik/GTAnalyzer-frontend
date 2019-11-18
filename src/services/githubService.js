@@ -28,5 +28,13 @@ export default {
             '/ganalyzer/createrepository/',
             data
         )
+    },
+    performAnalysis(data) {
+        return axiosClient.post('/ganalyzer/analyze/',
+            data)
+    },
+    getAnalysisResults(data) {
+        return axiosClient.post('/ganalyzer/results/',
+            data)
     }
 }

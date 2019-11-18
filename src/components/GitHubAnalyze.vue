@@ -49,22 +49,20 @@
                         </v-row>
                     </v-container>
                     <v-btn color="error" @click="stepNumber = decrement(stepNumber)">Prev</v-btn>
-                    <v-btn color="success" @click="stepNumber = increment(stepNumber)"
-                           :disabled="isVerified()">Next
+                    <v-btn color="success" @click="sendAnalysisRequest"
+                           :disabled="isVerified()">Analyze
                     </v-btn>
                 </v-stepper-content>
                 <v-stepper-content step="4">
                     <v-container :fluid=true class="grey lighten-5">
                         <v-row justify="start">
-                            <v-col md="4">
-                                <v-card class="grey lighten-5" outlined>
-                                    <analyze-repositories></analyze-repositories>
-                                </v-card>
+                            <v-col>
+                                <analyze-repositories v-bind:meta="response"></analyze-repositories>
                             </v-col>
                         </v-row>
                     </v-container>
                     <v-btn color="error" @click="stepNumber = decrement(stepNumber)">Prev</v-btn>
-                    <v-btn color="success" @click="">Analyze</v-btn>
+                    <!--                    <v-btn color="success" @click="">Analyze</v-btn>-->
                 </v-stepper-content>
             </v-stepper-items>
         </v-stepper>
@@ -78,6 +76,7 @@
     import Lister from "@/components/Lister";
     import AnalyzeRepositories from "@/components/AnalyzeRepositories";
     import {mapGetters, mapActions} from 'vuex';
+    import githubService from "@/services/githubService";
 
     export default {
         name: 'GitHubAnalyze',
@@ -90,6 +89,7 @@
                 username: '',
                 token: '',
                 githubCaller: process.env.VUE_APP_CALLER_GITHUB,
+                response: null
             }
         },
         methods: {
@@ -101,6 +101,16 @@
                 if (step >= this.maxStepNumber)
                     return step;
                 return step + 1;
+            },
+            sendAnalysisRequest: function () {
+                let vueThis = this;
+                githubService.performAnalysis(this.getGHPayload)
+                    .then(response => {
+                        vueThis.response = response.data;
+                    }).catch(error => {
+                    console.log(error);
+                });
+                this.stepNumber = this.increment(this.stepNumber)
             },
             decrement: function (step) {
                 if (step <= this.minStepNumber)
@@ -117,6 +127,7 @@
         },
         computed: {
             ...mapGetters('githubCredentialStore', ['getToken', 'getUsername', 'getVerified']),
+            ...mapGetters('centralStore', ['getGHPayload']),
         }
     }
 </script>

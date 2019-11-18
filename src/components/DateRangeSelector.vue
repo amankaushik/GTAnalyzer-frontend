@@ -58,13 +58,14 @@
         <v-col v-if="!payloadRepoNames.empty">
             <v-card v-for="(item, index) of payloadRepoNames" v-bind:key="item.name">
                 <v-card-text>
-                    <v-col>{{item.name}}</v-col>
-                    <v-col>{{item.board_name}}</v-col>
+                    <v-col>{{item.name}} | {{item.board_name}}</v-col>
                     <v-col>
-                        <v-radio-group hide-details v-model="payloadRepoNames[index].selected"
-                                       v-for="milestone of item.milestones" v-bind:key="milestone.name">
-                            <v-radio :value="getDateRange(milestone)" :label="getDateRange(milestone)"></v-radio>
-                        </v-radio-group>
+                        <v-row>
+                            <v-radio-group hide-details v-model="payloadRepoNames[index].selected"
+                                           v-for="milestone of item.milestones" v-bind:key="milestone.name" dense>
+                                <v-radio :value="getDateRange(milestone)" :label="getDateRange(milestone)"></v-radio>
+                            </v-radio-group>
+                        </v-row>
                     </v-col>
                 </v-card-text>
             </v-card>
@@ -103,10 +104,9 @@
         watch: {
             // Enable/Disable "Next" button and update the central state of sprintList
             payload: function () {
-                this.setPayload(this.payload);
+                this.setGHPayload(this.payload);
                 this.verified = false;
                 if (Object.entries(this.payload).length !== 0) {
-                    console.log("Payload filled")
                     this.verified = true;
                 }
                 this.setVerified(this.verified);
@@ -124,7 +124,6 @@
         },
         props: {caller: Object},
         computed: {
-            ...mapGetters('taigaSprintDataStore', ['getPayload']),
             ...mapGetters('githubCredentialStore', ['getVerified', 'getUsername', 'getToken']),
             ...mapGetters('taigaCredentialStore', {
                 'taigaGetVerified': 'getVerified',
@@ -138,8 +137,8 @@
         },
         mixins: [csvFileParserMixin],
         methods: {
-            ...mapActions('taigaSprintDataStore',
-                ['setPayload']),
+            ...mapActions('centralStore',
+                ['setGHPayload']),
             ...mapActions('githubCredentialStore',
                 ['setVerified']),
             ...mapActions('taigaCredentialStore', {'taigaSetVerified': 'setVerified'}),
@@ -211,12 +210,13 @@
                 if (this.criteria === "manual") {
                     payload["integrate_taiga"] = false;
                     let dates = this.splitDateRange(this.dateRangeText);
-                    dates = dates.map(date => new Date(date).getTime());
+                    // getTime returns milliseconds
+                    dates = dates.map(date => new Date(date).getTime() / 1000);
                     dates.sort();
                     // timestamp, dates[0] already in expected format
-                    for (let repo in this.getSelectedRepositories) {
+                    for (let repo of this.getSelectedRepositories) {
                         payload["repo_names"].push({
-                            "name": this.getRepositoryList[repo],
+                            "name": repo,
                             "board_name": null,
                             "start_date": dates[0],
                             "end_date": dates[1]
@@ -225,10 +225,9 @@
                 } else { // Taiga Used to get date ranges
                     payload["integrate_taiga"] = true;
                     for (let repo of this.payloadRepoNames) {
-                        console.log(repo);
-                        // timestamp, dates[0] already in expected format
                         let dates = this.splitDateRange(repo.selected);
-                        dates = dates.map(date => new Date(date).getTime());
+                        // getTime returns milliseconds
+                        dates = dates.map(date => new Date(date).getTime() / 1000);
                         payload["repo_names"].push({
                             "name": repo.name,
                             "board_name": repo.board_name,
