@@ -9,16 +9,25 @@
             <br>
             <v-row v-if="(running)" justify="center">
                 <v-progress-linear
-                        v-model="donePercent"
+                        v-model="doneCombinations"
                         color="light-blue"
                         height="20"
                         striped>
                     <template v-slot="{ value }">
-                        <strong>{{ Math.ceil(value) }}%</strong>
+                        <strong>{{doneCombinations}} of {{totalCombinations}}</strong>
                     </template>
                 </v-progress-linear>
             </v-row>
             <v-row v-if="done">
+                <v-expansion-panels focusable popout>
+                    <v-expansion-panel
+                            v-for="(repo, i) of response" :key="i">
+                        <v-expansion-panel-header></v-expansion-panel-header>
+                        <v-expansion-panel-content>
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                        </v-expansion-panel-content>
+                    </v-expansion-panel>
+                </v-expansion-panels>
                 {{response}}
             </v-row>
         </v-col>
@@ -34,14 +43,14 @@
         data: function () {
             return {
                 // num of combinations to analyze - progress bar
-                totalCombinations: null,
-                doneCombinations: null,
+                totalCombinations: 0,
+                doneCombinations: 0,
                 // is Analysis running
                 running: false,
                 // is Analysis done - when all combinations are done
                 done: false,
                 // % task done
-                donePercent: 0,
+                // donePercent: 0,
                 response: {},
                 timerId: null,
                 // polling interval
@@ -49,21 +58,28 @@
             }
         },
         watch: {
-            donePercent: function () {
-                if (this.donePercent >= 100) {
+            doneCombinations: function () {
+                if (this.doneCombinations >= this.totalCombinations) {
                     this.running = false;
                     this.done = true;
                     clearInterval(this.timerId);
                 }
-            }
+            },
+            // donePercent: function () {
+            //     if (this.donePercent >= 100) {
+            //         this.running = false;
+            //         this.done = true;
+            //         clearInterval(this.timerId);
+            //     }
+            // }
         },
         methods: {
             resetResults: function () {
-                this.totalCombinations = null;
-                this.doneCombinations = null;
+                this.totalCombinations = 0;
+                this.doneCombinations = 0;
                 this.running = false;
                 this.done = false;
-                this.donePercent = 0;
+                // this.donePercent = 0;
                 this.response = {};
                 this.timerId = null;
             },
@@ -78,7 +94,7 @@
                 githubService.getAnalysisResults(payload).then(response => {
                     this.response = response.data;
                     this.doneCombinations = Object.keys(this.response).length;
-                    this.donePercent = (this.doneCombinations / this.totalCombinations) * 100;
+                    // this.donePercent = (this.doneCombinations / this.totalCombinations) * 100;
                 }).catch(error => {
                     console.log(error);
                 });

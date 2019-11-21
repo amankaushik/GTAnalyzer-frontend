@@ -32,10 +32,10 @@ export default {
             state.uploadedFileContent = value;
         },
         setUploadedFile: (state, value) => {
-            state.uploadedFile = value
+            state.uploadedFile = value;
         },
         setGHPayload: (state, value) => {
-            state.GHPayload = value
+            state.GHPayload = value;
         }
     }
 };
