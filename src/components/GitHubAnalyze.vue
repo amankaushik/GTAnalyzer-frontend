@@ -95,6 +95,7 @@
         methods: {
             ...mapActions('githubCredentialStore',
                 ['setToken', 'setUsername', 'setVerified']),
+            ...mapActions('centralStore', ['setAnalysisRequested']),
             increment: function (step) {
                 this.setFromState();
                 this.setVerified(false); // disable the 'Next' button on the "next" page
@@ -107,6 +108,9 @@
                 githubService.performAnalysis(this.getGHPayload)
                     .then(response => {
                         vueThis.response = response.data;
+                        // new analysis requested
+                        // set central value for analysis requested, this is used to track request state
+                        vueThis.setAnalysisRequested(true);
                     }).catch(error => {
                     console.log(error);
                 });
@@ -114,14 +118,14 @@
             },
             decrement: function (step) {
                 if (step <= this.minStepNumber)
-                    return step
+                    return step;
                 return step - 1;
             },
             isVerified: function () {
                 return !this.getVerified;
             },
             setFromState: function () {
-                this.token = this.getToken
+                this.token = this.getToken;
                 this.username = this.getUsername
             }
         },

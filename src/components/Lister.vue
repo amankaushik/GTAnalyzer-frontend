@@ -134,6 +134,7 @@
                 let strategyManager = new this.StrategyManager(this.caller.name);
                 let strategy = strategyManager.strategy;
                 let vueThis = this;
+                vueThis.entityList = [];
                 if (this.files && this.files.length !== 0) {
                     this.performPreFetchSteps(strategy);
                     const reader = new FileReader();
@@ -156,6 +157,7 @@
                 let strategy = strategyManager.strategy;
                 this.performPreFetchSteps(strategy);
                 let vueThis = this;
+                vueThis.entityList = [];
                 strategy.serviceGetter(strategy.getUser(), strategy.getToken())
                         .then(response => {
                             vueThis.entityList = this.extractEntityData(response.data);

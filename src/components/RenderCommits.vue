@@ -26,7 +26,20 @@
             <v-container fluid>
                 <v-row dense v-if="isCommitDataAvailable()">
                     <v-col v-for="commit of commitData" :key="commit.sha">
-                        <v-card class="mx-auto" max-width="400">
+                        <v-card class="mx-auto" max-width="400" v-if="hasError(commit)">
+                            <v-card-title>
+                                Analysis Failed at Step - {{commit.step}}
+                            </v-card-title>
+                            <v-card-subtitle>
+                                Cause
+                            </v-card-subtitle>
+                            <v-card-text>
+                                <span><strong>Type:</strong> {{commit.error.type}}</span>
+                                <br>
+                                <span><strong>Message:</strong> {{commit.error.message}}</span>
+                            </v-card-text>
+                        </v-card>
+                        <v-card class="mx-auto" max-width="400" v-else>
                             <v-card-title>
                                 <v-icon large left>mdi-calendar-range</v-icon>
                                 <span class="title font-weight-light">{{commit.date}}</span>
@@ -79,7 +92,9 @@
                     </v-col>
                 </v-row>
                 <v-row v-else>
-                    <span> No Records Found!</span>
+                    <v-sheet>
+                        <span> No Records Found!</span>
+                    </v-sheet>
                 </v-row>
             </v-container>
         </v-card>
@@ -93,7 +108,7 @@
                         <v-card class="mx-auto" max-width="400">
                             <v-card-title>
                                 <v-icon large left>mdi-calendar-range</v-icon>
-                                <span class="title font-weight-light"> {{getPRObjectField(pr, "created_date")}}</span>
+                                <span class="title font-weight-light"> {{getPRObjectField(pr, "created_at")}}</span>
                             </v-card-title>
                             <v-card-text class="headline font-weight-bold">
                                 {{getPRObjectField(pr, "title")}}
@@ -153,7 +168,9 @@
                     </v-col>
                 </v-row>
                 <v-row v-else>
-                    Not acted as a {{role}} on any PR.
+                    <v-sheet>
+                        <span>Not acted as a {{role}} on any PR.</span>
+                    </v-sheet>
                 </v-row>
             </v-container>
         </v-card>
@@ -237,6 +254,9 @@
             },
             getPRObjectField: function (pr, key) {
                 return this.commits.prDetails[pr.toString()][key];
+            },
+            hasError: function (data) {
+                return data.hasOwnProperty("failed");
             }
         }
     }

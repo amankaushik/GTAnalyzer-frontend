@@ -131,6 +131,7 @@
                 'getUserId': 'getUserId'
             }),
             ...mapGetters('repositoryDataStore', ['getSelectedRepositories', 'getRepositoryList']),
+            ...mapGetters('centralStore', ['getGHPayload']),
             dateRangeText() {
                 return this.dates.join(' ~ ')
             },

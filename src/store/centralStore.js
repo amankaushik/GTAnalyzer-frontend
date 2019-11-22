@@ -3,7 +3,8 @@ export default {
     state: {
         uploadedFileContent: null,
         uploadedFile: null,
-        GHPayload: {}
+        GHPayload: {},
+        analysisRequested: false
     },
     getters: {
         getUploadedFileContent: state => {
@@ -15,6 +16,9 @@ export default {
         getGHPayload: state => {
             return state.GHPayload;
         },
+        getAnalysisRequested: state => {
+            return state.analysisRequested;
+        },
     },
     actions: {
         setUploadedFileContent: ({commit}, payload) => {
@@ -25,6 +29,9 @@ export default {
         },
         setGHPayload: ({commit}, payload) => {
             commit('setGHPayload', payload);
+        },
+        setAnalysisRequested: ({commit}, payload) => {
+            commit('setAnalysisRequested', payload);
         }
     },
     mutations: {
@@ -36,6 +43,9 @@ export default {
         },
         setGHPayload: (state, value) => {
             state.GHPayload = value;
+        },
+        setAnalysisRequested: (state, value) => {
+            state.analysisRequested = value;
         }
     }
 };

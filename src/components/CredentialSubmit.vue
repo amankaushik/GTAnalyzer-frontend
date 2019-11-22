@@ -82,7 +82,6 @@
                 this.token = ''
             },
             performFlightCheck() {
-                console.log("performing flight checks")
                 githubService.performFlightCheck(this.token, this.username)
                     .then(response => {
                         this.verified = true;
