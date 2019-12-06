@@ -22,31 +22,7 @@
                             </v-container>
                         </v-form>
                     </v-col>
-                    <v-col>
-                        <v-form>
-                            <v-container>
-                                <v-row>
-                                    <v-file-input
-                                            v-model="files"
-                                            color="deep-purple accent-4"
-                                            counter
-                                            label="File input"
-                                            placeholder="Select your file"
-                                            prepend-icon="mdi-paperclip"
-                                            outlined
-                                            :show-size="1000"
-                                            accept=".csv"
-                                    >
-                                    </v-file-input>
-                                    <v-divider vertical class="mx-2"></v-divider>
-                                    <v-btn :disabled="!(isFileUploaded)" color="success"
-                                           @click="getEntitiesFromFile">
-                                        Submit
-                                    </v-btn>
-                                </v-row>
-                            </v-container>
-                        </v-form>
-                    </v-col>
+                    <file-upload button-text="Submit" @uploadDone="getEntitiesFromFile"></file-upload>
                 </v-row>
             </v-container>
         </v-card>
@@ -78,50 +54,49 @@
 </template>
 
 <script>
-    import {listerStrategyMixin} from "@/mixins/listerStrategyMixin";
+    import {strategyMixin} from "@/mixins/strategyMixin";
     import {csvFileParserMixin} from "@/mixins/csvFileParserMixin";
+    import FileUpload from "@/components/FileUpload";
+    import {mapGetters} from "vuex";
 
     export default {
         name: "Lister",
+        components: {FileUpload},
         data: function () {
             return {
                 selectedEntities: [],
                 entityList: [],
                 files: [],
-                gettingData: false,
                 verified: false,
-                filterText: ""
+                filterText: "",
+                fileContent: [],
+                gettingData: false
             }
         },
-        mixins: [listerStrategyMixin, csvFileParserMixin],
+        mixins: [strategyMixin, csvFileParserMixin],
         props: {caller: Object},
+        computed: {
+            ...mapGetters('centralStore', ['getUploadedFileContent']),
+        },
         watch: {
             // Enable/Disable "Next" button and update the central state of selectedRepositories
             selectedEntities: function () {
-                let strategyManager = new this.StrategyManager(this.caller.name)
-                let strategy = strategyManager.strategy
+                let strategyManager = new this.StrategyManager(this.caller.name);
+                let strategy = strategyManager.strategy;
                 let selectedEntityNames = [];
                 // selectedEntities hold the index of the selected chip
                 for (let index of this.selectedEntities) {
                     selectedEntityNames.push(strategy.getEntityList()[index]);
                 }
                 strategy.setSelectedEntities(selectedEntityNames);
-                this.verified = false
-                if (this.selectedEntities.length) { // any repository is selected
-                    this.verified = true;
-                }
+                this.verified = this.selectedEntities.length;
                 strategy.setVerified(this.verified)
             },
         },
         methods: {
-            isFileUploaded: function () {
-                if (this.files === null || this.fiber.empty || this.files.length != 1)
-                    return false;
-                return true;
-            },
             filterEntityList: function () {
-                let strategyManager = new this.StrategyManager(this.caller.name)
-                let strategy = strategyManager.strategy
+                let strategyManager = new this.StrategyManager(this.caller.name);
+                let strategy = strategyManager.strategy;
                 if (this.filterText === null) {
                     this.entityList = strategy.getEntityList()
                 } else {
@@ -133,55 +108,44 @@
             getEntitiesFromFile: function () {
                 let strategyManager = new this.StrategyManager(this.caller.name);
                 let strategy = strategyManager.strategy;
-                let vueThis = this;
-                vueThis.entityList = [];
-                if (this.files && this.files.length !== 0) {
-                    this.performPreFetchSteps(strategy);
-                    const reader = new FileReader();
-                    reader.onloadend = function (event) {
-                        if (event.target.readyState === FileReader.DONE) {
-                            this.fileContent = event.target.result;
-                            this.fileContent = vueThis.parseCSVFile(this.fileContent, 3, 1);
-                            for (let line of this.fileContent) {
-                                vueThis.entityList.push(line[0])
-                            }
-                            strategy.setEntityList(vueThis.entityList); // update central state
-                            vueThis.gettingData = false; // hide progress circle
-                        }
-                    };
-                    reader.readAsText(this.files);
+                this.performPreFetchSteps(strategy, false);
+                this.fileContent = this.getUploadedFileContent;
+                this.fileContent = this.parseCSVFile(this.fileContent, 3, 1);
+                for (let line of this.fileContent) {
+                    this.entityList.push(line[0])
                 }
+                strategy.setEntityList(this.entityList); // update central state
             },
             getEntitiesFromSource: function () {
                 let strategyManager = new this.StrategyManager(this.caller.name);
                 let strategy = strategyManager.strategy;
-                this.performPreFetchSteps(strategy);
+                this.performPreFetchSteps(strategy, true);
                 let vueThis = this;
                 vueThis.entityList = [];
                 strategy.serviceGetter(strategy.getUser(), strategy.getToken())
-                        .then(response => {
-                            vueThis.entityList = this.extractEntityData(response.data);
-                            vueThis.gettingData = false; // hide progress circle
-                            strategy.setEntityList(vueThis.entityList) // update central state
-                        }).catch(error => {
-                        console.log(error);
+                    .then(response => {
+                        vueThis.entityList = this.extractEntityData(response.data, strategy.entityKeyName);
                         vueThis.gettingData = false; // hide progress circle
-                    })
+                        strategy.setEntityList(vueThis.entityList) // update central state
+                    }).catch(error => {
+                    console.log(error);
+                    vueThis.gettingData = false; // hide progress circle
+                })
             },
-            extractEntityData: function (entityList) {
+            extractEntityData: function (entityList, keyName) {
                 let entityNames = [];
                 for (let entity of entityList) {
-                    entityNames.push(entity.name);
+                    entityNames.push(entity[keyName]);
                 }
                 return entityNames;
             },
-            performPreFetchSteps: function (strategy) {
-                this.entityList = []
-                strategy.setEntityList(this.entityList) // update central state
+            performPreFetchSteps: function (strategy, gettingData) {
+                this.entityList = [];
+                strategy.setEntityList(this.entityList); // update central state
                 // disable 'Next' every time repositories are reloaded
                 this.verified = false;
-                strategy.setVerified(this.verified)
-                this.gettingData = true; // display progress circle
+                strategy.setVerified(this.verified);
+                this.gettingData = gettingData; // display progress circle
             },
         }
     }

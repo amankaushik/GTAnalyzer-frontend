@@ -22,37 +22,7 @@
         </v-row>
         <!-- If Taiga Credentials have been stored -->
         <v-row v-if="this.taigaGetVerified">
-            <v-col>
-                <v-form>
-                    <v-container>
-                        <v-row>
-                            <v-file-input
-                                    v-model="files"
-                                    color="deep-purple accent-4"
-                                    counter
-                                    label="File input"
-                                    placeholder="Select your file"
-                                    prepend-icon="mdi-paperclip"
-                                    outlined
-                                    :show-size="1000"
-                                    accept=".csv"
-                            >
-                            </v-file-input>
-                            <v-divider vertical class="mx-2"></v-divider>
-                            <v-btn :disabled="!(isFileUploaded)" color="success"
-                                   @click="getEntitiesFromFile">
-                                Get Sprint Dates
-                            </v-btn>
-                        </v-row>
-                    </v-container>
-                </v-form>
-                <div v-if="gettingData">
-                    <v-progress-circular
-                            indeterminate
-                            color="purple"
-                    ></v-progress-circular>
-                </div>
-            </v-col>
+            <file-upload button-text="Get Sprint Dates" @uploadDone="getEntitiesFromFile"></file-upload>
         </v-row>
         <!-- file the file has been parsed -->
         <v-col v-if="!payloadRepoNames.empty">
@@ -85,17 +55,17 @@
     import {mapGetters, mapActions} from 'vuex';
     import taigaService from "@/services/taigaService";
     import {csvFileParserMixin} from "@/mixins/csvFileParserMixin";
+    import FileUpload from "@/components/FileUpload";
 
     export default {
         name: "DateRangeSelector",
-        components: {CredentialSubmit},
+        components: {FileUpload, CredentialSubmit},
         data: () => ({
             // not guaranteed to be sorted
             dates: [],
             criteria: "auto",
             verified: false,
             files: [],
-            gettingData: false,
             fileContent: [],
             payload: {},
             payloadRepoNames: [],
@@ -131,7 +101,7 @@
                 'getUserId': 'getUserId'
             }),
             ...mapGetters('repositoryDataStore', ['getSelectedRepositories', 'getRepositoryList']),
-            ...mapGetters('centralStore', ['getGHPayload']),
+            ...mapGetters('centralStore', ['getGHPayload', 'getUploadedFileContent']),
             dateRangeText() {
                 return this.dates.join(' ~ ')
             },
@@ -154,43 +124,33 @@
             },
             getEntitiesFromFile: function () {
                 let vueThis = this;
-                if (this.files && this.files.length !== 0) {
-                    this.performPreFetchSteps();
-                    const reader = new FileReader();
-                    reader.onloadend = function (event) {
-                        if (event.target.readyState === FileReader.DONE) {
-                            this.fileContent = event.target.result;
-                            this.fileContent = vueThis.parseCSVFile(this.fileContent, 0, 1);
-                            for (let content of this.fileContent) {
-                                // Get the corresponding Taiga board for the selected repo
-                                if (vueThis.getSelectedRepositories.includes(content[0])) {
-                                    let _tmp = {
-                                        "name": content[0],
-                                        "board_name": content[1],
-                                        "selected": null  // Filled from radio buttons
-                                    };
-                                    taigaService.getMilestones(vueThis.getAuthToken, content[1])
-                                        .then(response => {
-                                            _tmp["milestones"] = response.data
-                                        }).catch(error => {
-                                        _tmp["milestones"] = [];
-                                        console.log(error);
-                                    }).finally(() => {
-                                        vueThis.payloadRepoNames.push(_tmp);
-                                    })
-                                }
-                            }
-                        }
-                    };
-                    reader.readAsText(this.files);
-                    this.gettingData = false;
+                this.performPreFetchSteps();
+                this.fileContent = this.getUploadedFileContent;
+                this.fileContent = vueThis.parseCSVFile(this.fileContent, 0, 1);
+                for (let content of this.fileContent) {
+                    // Get the corresponding Taiga board for the selected repo
+                    if (vueThis.getSelectedRepositories.includes(content[0])) {
+                        let _tmp = {
+                            "name": content[0],
+                            "board_name": content[1],
+                            "selected": null  // Filled from radio buttons
+                        };
+                        taigaService.getMilestones(vueThis.getAuthToken, content[1])
+                            .then(response => {
+                                _tmp["milestones"] = response.data
+                            }).catch(error => {
+                            _tmp["milestones"] = [];
+                            console.log(error);
+                        }).finally(() => {
+                            vueThis.payloadRepoNames.push(_tmp);
+                        })
+                    }
                 }
             },
             performPreFetchSteps: function () {
                 // disable 'Next' every time repositories are reloaded
                 this.verified = false;
                 this.setVerified(this.verified);
-                this.gettingData = true; // display progress circle
             },
             isCriteriaTaiga: function () {
                 // get date range from Taiga

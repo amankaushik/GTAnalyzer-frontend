@@ -1,39 +1,35 @@
 <template>
-    <v-container>
-        <v-row>
-            <v-col>
-                <v-form>
-                    <v-container>
-                        <v-row>
-                            <v-file-input
-                                    v-model="files"
-                                    color="deep-purple accent-4"
-                                    counter
-                                    label="File input"
-                                    placeholder="Select your file"
-                                    prepend-icon="mdi-paperclip"
-                                    outlined
-                                    :show-size="1000"
-                                    accept=".csv,.json"
-                            >
-                            </v-file-input>
-                            <v-divider vertical class="mx-2"></v-divider>
-                            <v-btn :disabled="disableButton()" color="success"
-                                   @click="storeDataFromUploadedFile">
-                                {{buttonText}}
-                            </v-btn>
-                        </v-row>
-                    </v-container>
-                </v-form>
-                <div v-if="gettingData">
-                    <v-progress-circular
-                            indeterminate
-                            color="purple"
-                    ></v-progress-circular>
-                </div>
-            </v-col>
-        </v-row>
-    </v-container>
+    <v-col>
+        <v-form>
+            <v-container>
+                <v-row>
+                    <v-file-input
+                            v-model="files"
+                            color="deep-purple accent-4"
+                            counter
+                            label="File input"
+                            placeholder="Select your file"
+                            prepend-icon="mdi-paperclip"
+                            outlined
+                            :show-size="1000"
+                            accept=".csv,.json"
+                    >
+                    </v-file-input>
+                    <v-divider vertical class="mx-2"></v-divider>
+                    <v-btn :disabled="disableButton()" color="success"
+                           @click="storeDataFromUploadedFile">
+                        {{buttonText}}
+                    </v-btn>
+                </v-row>
+            </v-container>
+        </v-form>
+        <div v-if="gettingData">
+            <v-progress-circular
+                    indeterminate
+                    color="purple"
+            ></v-progress-circular>
+        </div>
+    </v-col>
 </template>
 
 <script>
@@ -45,12 +41,17 @@
         data: function () {
             return {
                 gettingData: false,
-                files: [] // single file upload only
+                files: [], // single file upload only
+                csv: "text/csv",
+                json: "application/json"
             }
         },
         methods: {
             ...mapActions('centralStore', ['setUploadedFileContent', 'setUploadedFile']),
             disableButton: function () {
+                // file selected then deselected - disable button
+                if (this.files === null || this.files === undefined)
+                    return true;
                 // files is an empty array - disable button
                 if (this.files.length !== undefined && this.files.length === 0)
                     return true;
@@ -68,11 +69,18 @@
                     const reader = new FileReader();
                     reader.onloadend = function (event) {
                         if (event.target.readyState === FileReader.DONE) {
-                            let jsonFileContent = {};
                             let fileContent = event.target.result;
-                            eval("jsonFileContent ="+fileContent);
-                            vueThis.setUploadedFileContent(jsonFileContent);
                             vueThis.gettingData = false;
+                            if (vueThis.files.type === vueThis.csv) {
+                                vueThis.setUploadedFileContent(fileContent);
+                            } else if (vueThis.files.type === vueThis.json) {
+                                let jsonFileContent = {};
+                                eval("jsonFileContent =" + fileContent);
+                                vueThis.setUploadedFileContent(jsonFileContent);
+                            } else {
+                                console.log("Incorrect file format!");
+                                vueThis.setUploadedFileContent([]);
+                            }
                             vueThis.$emit("uploadDone", true);
                         }
                     };

@@ -2,32 +2,10 @@
     <v-container class="grey lighten-5">
         <v-row justify="space-around">
             <v-col>
-                <credential-submit v-bind:caller="{name: 'taiga'}" ></credential-submit>
+                <credential-submit v-bind:caller="{name: 'taiga'}"></credential-submit>
             </v-col>
             <v-col v-if="isVerified()">
-                <v-form>
-                    <v-container>
-                        <v-row justify="space-around">
-                            <v-file-input
-                                    v-model="files"
-                                    color="deep-purple accent-4"
-                                    counter
-                                    label="File input"
-                                    placeholder="Select your file"
-                                    prepend-icon="mdi-paperclip"
-                                    outlined
-                                    :show-size="1000"
-                                    accept=".csv"
-                            >
-                            </v-file-input>
-                            <v-divider vertical class="mx-2"></v-divider>
-                            <v-btn color="success"
-                                   @click="createRepositoryFromFile">
-                                {{buttonText}}
-                            </v-btn>
-                        </v-row>
-                    </v-container>
-                </v-form>
+                <file-upload :button-text="buttonText" @uploadDone="createRepositoryFromFile"></file-upload>
             </v-col>
         </v-row>
         <v-divider></v-divider>
@@ -79,12 +57,13 @@
                 files: [], // single file upload only
                 response: null,
                 lines: [],
-                active: []
+                active: [],
+                fileContent: []
             }
         },
         mixins: [csvFileParserMixin],
         computed: {
-            ...mapGetters('centralStore', ['getUploadedFile']),
+            ...mapGetters('centralStore', ['getUploadedFile', 'getUploadedFileContent']),
             ...mapGetters('taigaCredentialStore', ['getAuthToken', 'getUsername',
                 'getUserId', 'getPassword', 'getVerified']),
         },
@@ -142,30 +121,22 @@
             createRepositoryFromFile: function () {
                 this.response = null;
                 this.gettingData = true;
+                this.fileContent = this.getUploadedFileContent;
+                this.lines = this.parseCSVFile(this.fileContent, 3, 1);
+                const data = this.createPayload(this.lines);
                 let vueThis = this;
-                if (this.files && this.files.length !== 0) {
-                    const reader = new FileReader();
-                    reader.onloadend = function (event) {
-                        if (event.target.readyState === FileReader.DONE) {
-                            this.fileContent = event.target.result
-                            vueThis.lines = vueThis.parseCSVFile(this.fileContent, 3, 1)
-                            const data = vueThis.createPayload(vueThis.lines)
-                            taigaService.createBoardFromFile(data)
-                                .then(response => {
-                                    vueThis.response = vueThis.convertToExpansionPanel(response.data)
-                                    vueThis.gettingData = false;
-                                }).catch(error => {
-                                console.log(error)
-                            })
-                        }
-                    }
-                    reader.readAsText(this.files);
-                }
+                taigaService.createBoardFromFile(data)
+                    .then(response => {
+                        vueThis.response = vueThis.convertToExpansionPanel(response.data);
+                        vueThis.gettingData = false;
+                    }).catch(error => {
+                    console.log(error)
+                })
             },
             createPayload: function (lines) {
-                let payload = []
+                let payload = [];
                 for (let line of lines) {
-                    let data = {}
+                    let data = {};
                     data["auth_token"] = this.getAuthToken;
                     data["is_private"] = false;  // always create a public board
                     data["project_name"] = line[0];

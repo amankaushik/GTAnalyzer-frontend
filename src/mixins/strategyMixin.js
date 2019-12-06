@@ -2,7 +2,7 @@ import store from '../store'
 import githubService from "@/services/githubService";
 import taigaService from "@/services/taigaService";
 
-export const listerStrategyMixin = {
+export const strategyMixin = {
    data() {
        return {
            StrategyManager: class StrategyManager {
@@ -21,6 +21,9 @@ export const listerStrategyMixin = {
 class TaigaStrategy {
     constructor () {
         this.serviceGetter = taigaService.getBoardList;
+        this.resultGetter = taigaService.getAnalysisResults;
+        // this value is used to query the Taiga API for board details
+        this.entityKeyName = "slug";
     }
     setVerified (value) {
         store._mutations["taigaCredentialStore/setVerified"][0](value)
@@ -46,11 +49,20 @@ class TaigaStrategy {
     getToken () {
         return store.getters["taigaCredentialStore/getAuthToken"]
     }
+    getAnalysisRequested () {
+        return store.getters["centralStore/getTGAnalysisRequested"];
+    }
+    setAnalysisRequested (value) {
+        store._mutations["centralStore/setTGAnalysisRequested"][0](value);
+    }
 }
 
 class GitHubStrategy {
     constructor () {
         this.serviceGetter = githubService.getRepositoriesFromGitHub;
+        this.resultGetter = githubService.getAnalysisResults;
+        // this value is used to query the GitHub API for repository details
+        this.entityKeyName = "name";
     }
     setVerified (value) {
         store._mutations["githubCredentialStore/setVerified"][0](value)
@@ -75,5 +87,11 @@ class GitHubStrategy {
     }
     getToken () {
         return store.getters["githubCredentialStore/getToken"]
+    }
+    getAnalysisRequested () {
+        return store.getters["centralStore/getGHAnalysisRequested"];
+    }
+    setAnalysisRequested (value) {
+        store._mutations["centralStore/setGHAnalysisRequested"][0](value);
     }
 }

@@ -4,12 +4,13 @@
             <v-row justify="space-around">
                 <v-btn color="success" @click="startPolling" :disabled="isAnalysisRequested()"> Get Analysis Results
                 </v-btn>
-<!--                <v-btn color="error" @click="resetResults">Reset Analysis Results</v-btn>-->
+                <a :href="downloadDataDump" download="dump.json" > Download Data Dump
+                </a>
             </v-row>
             <br>
             <v-row v-if="(running)" justify="center">
                 <v-progress-linear
-                        v-model="doneCombinations"
+                        v-model="donePercent"
                         color="light-blue"
                         height="20"
                         striped>
@@ -19,21 +20,21 @@
                 </v-progress-linear>
             </v-row>
             <v-row v-if="done">
-                <render-analysis :meta="prepareRenderPropData()"></render-analysis>
+                <component v-bind:is="render.renderComponent" :meta="prepareRenderPropData()"></component>
             </v-row>
         </v-col>
     </v-container>
 </template>
 
 <script>
-    import githubService from "@/services/githubService";
     import RenderAnalysis from "@/components/RenderAnalysis";
-    import {mapActions, mapGetters} from "vuex";
+    import {strategyMixin} from "@/mixins/strategyMixin";
 
     export default {
-        name: "AnalyzeRepositories",
+        name: "AnalyzeEntities",
         components: {RenderAnalysis},
-        props: {meta: Object},
+        props: {meta: Object, render: Object},
+        mixins: [strategyMixin],
         data: function () {
             return {
                 // num of combinations to analyze - progress bar
@@ -44,12 +45,11 @@
                 // is Analysis done - when all combinations are done
                 done: false,
                 // % task done
-                // donePercent: 0,
-                response: {},
+                donePercent: 0,
+                response: {"error": "No Data available"},
                 timerId: null,
                 // polling interval
                 interval: 30000,
-
             }
         },
         watch: {
@@ -62,30 +62,40 @@
             },
         },
         computed: {
-            ...mapGetters('centralStore', ['getAnalysisRequested'])
+            downloadDataDump: function () {
+                let dData = JSON.stringify(this.response, null, 2);
+                let blob = new Blob([dData], {type: 'application/json'});
+                return window.URL.createObjectURL(blob);
+            }
         },
         methods: {
-            ...mapActions('centralStore', ['setAnalysisRequested']),
-            isAnalysisRequested: function() {
+            isAnalysisRequested: function () {
+                let strategyManager = new this.StrategyManager(this.render.caller);
+                let strategy = strategyManager.strategy;
                 // if a new analysis has been requested enable the button
-                return !(this.getAnalysisRequested);
+                return !(strategy.getAnalysisRequested);
             },
             startPolling: function () {
+                let strategyManager = new this.StrategyManager(this.render.caller);
+                let strategy = strategyManager.strategy;
                 this.totalCombinations = this.meta["combinations"];
                 this.doneCombinations = 0;
                 this.running = true;
                 this.done = false;
                 this.response = {};
                 // requested analysis has been processed - disable the button
-                this.setAnalysisRequested(false);
+                strategy.setAnalysisRequested(false);
                 // Once every <interval> seconds
                 this.timerId = setInterval(this.pollInInterval, this.interval);
             },
             pollInInterval: function () {
                 let payload = {"request_id": this.meta["request_id"]};
-                githubService.getAnalysisResults(payload).then(response => {
+                let strategyManager = new this.StrategyManager(this.render.caller);
+                let strategy = strategyManager.strategy;
+                strategy.resultGetter(payload).then(response => {
                     this.response = response.data;
                     this.doneCombinations = Object.keys(this.response).length;
+                    this.donePercent = (this.doneCombinations / this.totalCombinations) * 100;
                 }).catch(error => {
                     console.log(error);
                 });

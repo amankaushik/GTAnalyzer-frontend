@@ -57,12 +57,11 @@
                     <v-container :fluid=true class="grey lighten-5">
                         <v-row justify="start">
                             <v-col>
-                                <analyze-repositories v-bind:meta="response"></analyze-repositories>
+                                <analyze-entities v-bind:meta="response" v-bind:render="{renderComponent, caller: githubCaller}"></analyze-entities>
                             </v-col>
                         </v-row>
                     </v-container>
                     <v-btn color="error" @click="stepNumber = decrement(stepNumber)">Prev</v-btn>
-                    <!--                    <v-btn color="success" @click="">Analyze</v-btn>-->
                 </v-stepper-content>
             </v-stepper-items>
         </v-stepper>
@@ -74,13 +73,14 @@
     import CredentialSubmit from "@/components/CredentialSubmit";
     import DateRangeSelector from "@/components/DateRangeSelector";
     import Lister from "@/components/Lister";
-    import AnalyzeRepositories from "@/components/AnalyzeRepositories";
+    import AnalyzeEntities from "@/components/AnalyzeEntities";
+    import RenderAnalysis from "@/components/RenderAnalysis";
     import {mapGetters, mapActions} from 'vuex';
     import githubService from "@/services/githubService";
 
     export default {
         name: 'GitHubAnalyze',
-        components: {DateRangeSelector, AnalyzeRepositories, CredentialSubmit, Lister},
+        components: {DateRangeSelector, AnalyzeEntities, CredentialSubmit, Lister},
         data: function () {
             return {
                 stepNumber: 1,
@@ -89,13 +89,14 @@
                 username: '',
                 token: '',
                 githubCaller: process.env.VUE_APP_CALLER_GITHUB,
+                renderComponent: RenderAnalysis,
                 response: null
             }
         },
         methods: {
             ...mapActions('githubCredentialStore',
                 ['setToken', 'setUsername', 'setVerified']),
-            ...mapActions('centralStore', ['setAnalysisRequested']),
+            ...mapActions('centralStore', ['setGHAnalysisRequested']),
             increment: function (step) {
                 this.setFromState();
                 this.setVerified(false); // disable the 'Next' button on the "next" page
@@ -110,7 +111,7 @@
                         vueThis.response = response.data;
                         // new analysis requested
                         // set central value for analysis requested, this is used to track request state
-                        vueThis.setAnalysisRequested(true);
+                        vueThis.setGHAnalysisRequested(true);
                     }).catch(error => {
                     console.log(error);
                 });

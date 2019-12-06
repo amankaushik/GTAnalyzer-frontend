@@ -4,7 +4,9 @@ export default {
         uploadedFileContent: null,
         uploadedFile: null,
         GHPayload: {},
-        analysisRequested: false
+        TGAnalysisRequested: false,
+        GHAnalysisRequested: false,
+        TGPayload: {}
     },
     getters: {
         getUploadedFileContent: state => {
@@ -16,8 +18,14 @@ export default {
         getGHPayload: state => {
             return state.GHPayload;
         },
-        getAnalysisRequested: state => {
-            return state.analysisRequested;
+        getGHAnalysisRequested: state => {
+            return state.GHAnalysisRequested;
+        },
+        getTGAnalysisRequested: state => {
+            return state.TGAnalysisRequested;
+        },
+        getTGPayload: state => {
+            return state.TGPayload;
         },
     },
     actions: {
@@ -30,8 +38,14 @@ export default {
         setGHPayload: ({commit}, payload) => {
             commit('setGHPayload', payload);
         },
-        setAnalysisRequested: ({commit}, payload) => {
-            commit('setAnalysisRequested', payload);
+        setTGPayload: ({commit}, payload) => {
+            commit('setTGPayload', payload);
+        },
+        setGHAnalysisRequested: ({commit}, payload) => {
+            commit('setGHAnalysisRequested', payload);
+        },
+        setTGAnalysisRequested: ({commit}, payload) => {
+            commit('setTGAnalysisRequested', payload);
         }
     },
     mutations: {
@@ -44,8 +58,14 @@ export default {
         setGHPayload: (state, value) => {
             state.GHPayload = value;
         },
-        setAnalysisRequested: (state, value) => {
-            state.analysisRequested = value;
+        setTGPayload: (state, value) => {
+            state.TGPayload = value;
+        },
+        setTGAnalysisRequested: (state, value) => {
+            state.TGAnalysisRequested = value;
+        },
+        setGHAnalysisRequested: (state, value) => {
+            state.GHAnalysisRequested = value;
         }
     }
 };

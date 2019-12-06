@@ -11,8 +11,32 @@
                             :start="commits.startDate"
                             :end="commits.endDate"
                             :events="events"
+                            @click:event="showEvent"
                             :event-color="getEventColor"
                     ></v-calendar>
+                    <v-menu
+                            v-model="selectedOpen"
+                            :close-on-content-click="false"
+                            :activator="selectedElement"
+                            offset-x
+                    >
+                        <v-card color="grey lighten-4" min-width="350px" flat>
+                            <v-toolbar :color="selectedEvent.color" dark>
+                                <v-btn icon>
+                                    <v-icon>{{selectedEvent.icon}}</v-icon>
+                                </v-btn>
+                                <v-toolbar-title v-html="selectedEvent.name"></v-toolbar-title>
+                            </v-toolbar>
+                            <v-card-text>
+                                <span v-html="selectedEvent.details"></span>
+                            </v-card-text>
+                            <v-card-actions>
+                                <v-btn text color="secondary" @click="selectedOpen = false">
+                                    Cancel
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-menu>
                 </v-sheet>
                 <v-sheet v-else>
                     <span> No Records Found!</span>
@@ -137,7 +161,7 @@
                                         <span class="mr-1">·</span>
                                         <v-icon small class="mr-1">mdi-github-circle</v-icon>
                                         <span> <a :href="getPRObjectField(pr, 'url')"
-                                           target="_blank">View</a></span>
+                                                  target="_blank">View</a></span>
                                         <span class="mr-1">·</span>
                                         <template v-if="isOpen(getPRObjectField(pr, 'state'))">
                                             <v-chip small class="ma-2" color="green"
@@ -209,26 +233,41 @@
                 }
                 return false;
             },
+            getCommitSizeColorCode: function (val) {
+                if (val > 300)
+                    return "blue darken-4";
+                else if (val <= 300 && val > 200)
+                    return "blue darken-2";
+                else if (val <= 200 && val > 100)
+                    return "blue";
+                return "blue lighten-2";
+            },
             generateCalendarEvents: function () {
                 for (let commit of this.commitData) {
                     this.events.push({
-                        name: `Commit with ${commit.stats.additions} additions and ${commit.stats.deletions} deletions.`,
+                        name: `+ ${commit.stats.additions} & - ${commit.stats.deletions}`,
+                        details: `Commit with ${commit.stats.additions} additions and ${commit.stats.deletions} deletions.`,
                         start: commit.date,
                         end: commit.date,
-                        color: "blue"
+                        color: this.getCommitSizeColorCode(commit.stats.total),
+                        icon: 'mdi-timeline-text'
                     });
                 }
                 this.events.push({
                     name: "Sprint Start",
+                    details: "Sprint Start",
                     start: this.commits.startDate,
                     end: this.commits.startDate,
-                    color: "green"
+                    color: "green",
+                    icon: 'mdi-timeline-text'
                 });
                 this.events.push({
                     name: "Sprint End",
+                    details: "Sprint End",
                     start: this.commits.endDate,
                     end: this.commits.endDate,
-                    color: "red"
+                    color: "red",
+                    icon: 'mdi-timeline-text'
                 });
                 this.eventDataFlag = true;
             },
@@ -236,11 +275,11 @@
                 this.commitData = this.commits.data[this.commitKey];
             },
             hasUSNumber: function (message) {
-                let regExp = new RegExp('US#[\\d]+', 'gi');
+                let regExp = new RegExp('US(\\D)?(\\d)+', 'i');
                 return regExp.test(message);
             },
             hasTaskNumber: function (message) {
-                let regExp = new RegExp('TASK#[\\d]+', 'gi');
+                let regExp = new RegExp('TASK(\\D)?(\\d)+', 'i');
                 return regExp.test(message);
             },
             getEventColor: function (event) {
@@ -257,7 +296,21 @@
             },
             hasError: function (data) {
                 return data.hasOwnProperty("failed");
-            }
+            },
+            showEvent({nativeEvent, event}) {
+                const open = () => {
+                    this.selectedEvent = event;
+                    this.selectedElement = nativeEvent.target;
+                    setTimeout(() => this.selectedOpen = true, 10)
+                };
+                if (this.selectedOpen) {
+                    this.selectedOpen = false;
+                    setTimeout(open, 10);
+                } else {
+                    open();
+                }
+                nativeEvent.stopPropagation();
+            },
         }
     }
 </script>

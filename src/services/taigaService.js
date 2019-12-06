@@ -32,5 +32,13 @@ export default {
     getMilestones(authToken, boardName) {
         return axiosClient.post('/tanalyzer/milestones/',
             {auth_token: authToken, name: boardName})
+    },
+    performAnalysis(data) {
+        return axiosClient.post('/tanalyzer/analyze/',
+            data)
+    },
+    getAnalysisResults(data) {
+        return axiosClient.post('/tanalyzer/results/',
+            data)
     }
 }

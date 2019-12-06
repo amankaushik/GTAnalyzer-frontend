@@ -7,7 +7,7 @@
 
 <script>
     import FileUpload from "@/components/FileUpload";
-    import {mapActions, mapGetters} from "vuex";
+    import {mapGetters} from "vuex";
     import RenderAnalysis from "@/components/RenderAnalysis";
 
     export default {
@@ -30,8 +30,6 @@
             ...mapGetters('centralStore', ['getUploadedFileContent']),
         },
         methods: {
-            ...mapActions('centralStore',
-                ['setGHPayload']),
             getFileData: function (eventData) {
                 this.fileContent = this.getUploadedFileContent;
                 // no processing required over the raw file content provided

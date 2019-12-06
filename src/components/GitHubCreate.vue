@@ -2,40 +2,11 @@
     <v-container class="grey lighten-5">
         <v-row justify="space-around">
             <v-col>
-                <credential-submit v-bind:caller="{name: 'github'}" ></credential-submit>
+                <credential-submit v-bind:caller="{name: 'github'}"></credential-submit>
             </v-col>
             <v-col v-if="isVerified()">
-                <v-form>
-                    <v-container>
-                        <v-row justify="space-around">
-                            <v-file-input
-                                    v-model="files"
-                                    color="deep-purple accent-4"
-                                    counter
-                                    label="File input"
-                                    placeholder="Select your file"
-                                    prepend-icon="mdi-paperclip"
-                                    outlined
-                                    :show-size="1000"
-                                    accept=".csv"
-                            >
-                            </v-file-input>
-                            <v-divider vertical class="mx-2"></v-divider>
-                            <v-btn color="success"
-                                   @click="createRepositoryFromFile">
-                                {{buttonText}}
-                            </v-btn>
-                        </v-row>
-                    </v-container>
-                </v-form>
+                <file-upload :button-text="buttonText" @uploadDone="createRepositoryFromFile"></file-upload>
             </v-col>
-        </v-row>
-        <v-divider></v-divider>
-        <v-row justify="space-around" v-if="gettingData">
-            <v-progress-circular
-                    indeterminate
-                    color="purple"
-            ></v-progress-circular>
         </v-row>
         <v-row justify="space-around" v-if="response">
             <v-expansion-panels inset>
@@ -74,10 +45,11 @@
     import githubService from "@/services/githubService";
     import {mapGetters} from "vuex";
     import {csvFileParserMixin} from "@/mixins/csvFileParserMixin";
+    import FileUpload from "@/components/FileUpload";
 
     export default {
         name: "GitHubCreate",
-        components: {CredentialSubmit},
+        components: {FileUpload, CredentialSubmit},
         data: function () {
             return {
                 buttonText: "Create",
@@ -85,11 +57,12 @@
                 files: [], // single file upload only
                 response: null,
                 lines: [],
-                active: []
+                active: [],
+                fileContent: []
             }
         },
         computed: {
-            ...mapGetters('centralStore', ['getUploadedFile']),
+            ...mapGetters('centralStore', ['getUploadedFile', 'getUploadedFileContent']),
             ...mapGetters('githubCredentialStore', ['getToken', 'getUsername', 'getVerified']),
         },
         filters: {
@@ -161,29 +134,21 @@
             createRepositoryFromFile: function () {
                 this.response = null;
                 this.gettingData = true;
+                this.fileContent = this.getUploadedFileContent;
+                this.lines = this.parseCSVFile(this.fileContent, 3, 1);
+                const data = {};
+                data["token"] = this.getToken;
+                data["username"] = this.getUsername;
+                data["content"] = this.lines;
                 let vueThis = this;
-                if (this.files && this.files.length !== 0) {
-                    const reader = new FileReader();
-                    const data = {};
-                    reader.onloadend = function (event) {
-                        if (event.target.readyState === FileReader.DONE) {
-                            this.fileContent = event.target.result;
-                            vueThis.lines = vueThis.parseCSVFile(this.fileContent, 3, 1);
-                            data["token"] = vueThis.getToken;
-                            data["username"] = vueThis.getUsername;
-                            data["content"] = vueThis.lines;
-                            githubService.createRepositoryFromFile(data)
-                                .then(response => {
-                                    vueThis.response = vueThis.convertToExpansionPanel(response.data)
-                                    vueThis.gettingData = false;
-                                }).catch(error => {
-                                console.log(error)
-                            })
-                        }
-                    }
-                    reader.readAsText(this.files);
-                }
-            }
+                githubService.createRepositoryFromFile(data)
+                    .then(response => {
+                        vueThis.response = vueThis.convertToExpansionPanel(response.data);
+                        vueThis.gettingData = false;
+                    }).catch(error => {
+                    console.log(error)
+                });
+            },
         }
     }
 </script>
