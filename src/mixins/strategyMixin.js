@@ -68,9 +68,9 @@ class TaigaStrategy {
 
     prepareRenderPropData(response) {
         return {
-            userIcon: "mdi-github-circle",
-            entityIcon: "mdi-source-branch",
-            sourceIcon: "mdi-source-repository-multiple",
+            userIcon: "mdi-account",
+            entityIcon: "mdi-file-document-box",
+            sourceIcon: "mdi-file-document-box-multiple",
             data: response,
             renderData: {}
         };
@@ -152,6 +152,7 @@ class GitHubStrategy {
             if (localData[source].hasOwnProperty("step"))
                 delete localData[source]["step"];
         }
+        meta.renderData = localData;
         return meta;
     }
 }

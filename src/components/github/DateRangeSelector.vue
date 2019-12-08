@@ -134,9 +134,10 @@
                         };
                         taigaService.getMilestones(vueThis.getAuthToken, content[1])
                             .then(response => {
+                                _tmp["milestones"] = response.data;
                                 _tmp["selected"] = vueThis.getDateRange( // default selection
                                     _tmp["milestones"][0]
-                                );    _tmp["milestones"] = response.data;
+                                );
                                 vueThis.payloadRepoNames.push(_tmp); // only push if milestones available
                             }).catch(error => {
                             console.log(error);
