@@ -125,46 +125,33 @@
                                                     </v-list-item>
                                                 </v-list>
                                                 <v-card-actions>
-                                                    <v-dialog v-model="dialog" width="800px" scrollable persistent>
+                                                    <v-dialog width="800px">
                                                         <template v-slot:activator="{ on }">
                                                             <v-btn color="primary" text v-on="on">View Timeline
                                                             </v-btn>
                                                         </template>
                                                         <v-card>
                                                             <v-toolbar dark color="primary">
-                                                                <v-chip outlined align="left" class="ma-2"
-                                                                        @click="dialog = false">
-                                                                    <v-icon left>mdi-close</v-icon>
-                                                                </v-chip>
                                                                 <v-toolbar-title>Timeline</v-toolbar-title>
                                                             </v-toolbar>
                                                             <v-container>
                                                                 <v-timeline>
-                                                                    <v-timeline-item
-                                                                            v-for="(year, i) in years"
-                                                                            :key="i"
-                                                                            :color="year.color"
-                                                                            small
-                                                                    >
+                                                                    <v-timeline-item small
+                                                                                     v-for="(history, i) of getUSTimeline(ustory['history'],
+                                                                            meta.data[source].milestones[entity]['estimated_start'],
+                                                                    meta.data[source].milestones[entity]['estimated_finish'])"
+                                                                                     v-bind:key="i"
+                                                                                     :color="history.color">
                                                                         <template v-slot:opposite>
-        <span
-                :class="`headline font-weight-bold ${year.color}--text`"
-                v-text="year.year"
-        ></span>
+                                                                            <span :class="`${history.color}--text`"  v-text="history.date">
+                                                                            </span>
                                                                         </template>
-                                                                        <div class="py-4">
-                                                                            <h2 :class="`headline font-weight-light mb-4 ${year.color}--text`">
-                                                                                Lorem ipsum</h2>
-                                                                            <div>
-                                                                                Lorem ipsum dolor sit amet, no nam
-                                                                                oblique veritus. Commune scaevola
-                                                                                imperdiet nec ut, sed euismod convenire
-                                                                                principes at. Est et nobis iisque
-                                                                                percipit, an vim zril disputando
-                                                                                voluptatibus, vix an salutandi
-                                                                                sententiae.
-                                                                            </div>
-                                                                        </div>
+                                                                            <v-card class="elevation-2"
+                                                                                    :color="`${history.color} lighten-3`">
+                                                                                <v-card-subtitle>
+                                                                                    {{history.event}}
+                                                                                </v-card-subtitle>
+                                                                            </v-card>
                                                                     </v-timeline-item>
                                                                 </v-timeline>
                                                             </v-container>
@@ -194,36 +181,17 @@
             return {
                 entityTabs: null,
                 dialog: false,
-                sprintDetailKeys: [
-                    "estimated_start",
-                    "estimated_finish"
-                ],
-                sprintDetailKeysToText: {
-                    "estimated_start": "Start Date",
-                    "estimated_finish": "End Date"
-                },
-                years: [
-                    {
-                        color: 'cyan',
-                        year: '1960',
-                    },
-                    {
-                        color: 'green',
-                        year: '1970',
-                    },
-                    {
-                        color: 'pink',
-                        year: '1980',
-                    },
-                    {
-                        color: 'amber',
-                        year: '1990',
-                    },
-                    {
-                        color: 'orange',
-                        year: '2000',
-                    },
-                ],
+                sprintStartEventName: "Sprint Start",
+                sprintEndEventName: "Sprint End",
+                sprintMSEventName: "milestone",
+                sprintDescEventName: "description_diff",
+                sprintDescHTMLEventName: "description_html",
+                sprintFinishEventName: "finish_date",
+                sprintCloseEventName: "is_closed",
+                sprintStatusEventName: "status",
+                sprintOrderEventName: "sprint_order",
+                sprintBLOrderEventName: "backlog_order",
+                sprintPointsEventOrder: "points",
             }
         },
         filters: {
@@ -235,8 +203,110 @@
         },
         props: {meta: Object},
         methods: {
-            closeDialog: function () {
-                this.dialog = false;
+            getDiffEventDesc: function (event, details) {
+                if (event === this.sprintMSEventName) { // US moved to/from Sprint
+                    if (details[0] === null) { // US was in the backlog
+                        return `US moved to ${details[1]}`;
+                    } else if (details[1] === null) {
+                        return `US moved to backlog`;
+                    } else {
+                        return `US moved from ${details[0]} to ${details[1]}`;
+                    }
+                } else if (event === this.sprintDescEventName) {
+                    return "US Description changed"
+                } else if (event === this.sprintFinishEventName) {
+                    if (details[0] === "None") {
+                        return `New 'FinishDate': ${details[1].slice(0, 10)} assigned`;
+                    } else if (details[1] === "None") {
+                        return `'FinishDate' removed`;
+                    } else {
+                        return `'FinishDate' changed from ${details[0].slice(0, 10)} to ${details[1].slice(0, 10)}`;
+                    }
+                } else if (event === this.sprintCloseEventName) {
+                    if (details[0]) {
+                        return `User Story Closed`;
+                    } else {
+                        return `User Story (re)Opened`;
+                    }
+                } else if (event === this.sprintStatusEventName) {
+                    return `US status changed from ${details[0]} to ${details[1]}`;
+                } else if (event === this.sprintOrderEventName) {
+                    return `US sprint order changed`;
+                } else if (event === this.sprintBLOrderEventName) {
+                    return `US backlog order changed`;
+                } else if (event === this.sprintPointsEventOrder) {
+                    let template = '';
+                    for (let _type of Object.keys(details)) {
+                        if (details[_type][0] === "?") {
+                            template += `${details[_type[1]]} points assigned for ${_type}`;
+                        } else if (details[_type][1] === "?") {
+                            template += `Assigned points removed for ${_type}`;
+                        } else {
+                            template += `Points assigned for ${_type} changed from ${details[_type[0]]} to ${details[_type[1]]}`
+                        }
+                        template += '\n';
+                    }
+                    return template;
+                } else {
+                    return `Changes made to ${event}`;
+                }
+            },
+            getUSTimeline: function (history, start_date, end_date) {
+                let timelineData = [];
+                timelineData.push({
+                    date: start_date,
+                    event: this.sprintStartEventName,
+                    color: this.getEventColor(this.sprintStartEventName)
+                });
+                timelineData.push({
+                    date: end_date,
+                    event: this.sprintEndEventName,
+                    color: this.getEventColor(this.sprintEndEventName)
+                });
+                for (let item of history) {
+                    for (let event in item.diff) {
+                        /*
+                        For description change two keys are received at the same level.
+                        "description_diff" and "description_html".
+                        They both refer to the same event, hence of the keys is skipped here.
+                         */
+                        if (event === this.sprintDescHTMLEventName)
+                            continue;
+                        timelineData.push({
+                            date: item["created_at"],
+                            event: this.getDiffEventDesc(event, item.diff[event]),
+                            color: this.getEventColor(event)
+                        });
+                    }
+                }
+                return timelineData.sort((a, b) =>
+                    (new Date(a.date).getTime() > new Date(b.date).getTime()) ? 1 : -1
+                );
+            },
+            getEventColor: function (event) {
+                if (event === this.sprintStartEventName) {
+                    return "green";
+                } else if (event === this.sprintEndEventName) {
+                    return "red";
+                } else if (event === this.sprintMSEventName) {
+                    return "blue";
+                } else if (event === this.sprintDescEventName) {
+                    return "indigo";
+                } else if (event === this.sprintFinishEventName) {
+                    return "deep-purple";
+                } else if (event === this.sprintCloseEventName) {
+                    return "orange";
+                } else if (event === this.sprintStatusEventName) {
+                    return "amber";
+                } else if (event === this.sprintOrderEventName) {
+                    return "blue-grey";
+                } else if (event === this.sprintBLOrderEventName) {
+                    return "brown";
+                } else if (event === this.sprintPointsEventOrder) {
+                    return "grey";
+                } else {
+                    return "black";
+                }
             },
             getSprintURL: function (source, slug) {
                 return `https://tree.taiga.io/project/${source}/taskboard/${slug}`
