@@ -41,11 +41,11 @@
 </template>
 
 <script>
-    import CredentialSubmit from "@/components/CredentialSubmit";
+    import CredentialSubmit from "@/components/common/CredentialSubmit";
     import githubService from "@/services/githubService";
     import {mapGetters} from "vuex";
     import {csvFileParserMixin} from "@/mixins/csvFileParserMixin";
-    import FileUpload from "@/components/FileUpload";
+    import FileUpload from "@/components/common/FileUpload";
 
     export default {
         name: "GitHubCreate",

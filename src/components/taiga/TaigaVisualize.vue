@@ -1,12 +1,12 @@
 <template>
     <v-container>
         <file-upload button-text="Load Data Dump" @uploadDone="getFileData"></file-upload>
-        <render-t-g-analysis v-if="loaded"></render-t-g-analysis>
+        <render-t-g-analysis v-if="loaded" :meta="meta"></render-t-g-analysis>
     </v-container>
 </template>
 <script>
-    import FileUpload from "@/components/FileUpload";
-    import RenderTGAnalysis from "@/components/RenderTGAnalysis";
+    import FileUpload from "@/components/common/FileUpload";
+    import RenderTGAnalysis from "@/components/taiga/RenderTGAnalysis";
     import {mapGetters} from "vuex";
 
     export default {
@@ -14,7 +14,10 @@
         data() {
             return {
                 fileContent: null,
-                loaded: false
+                loaded: false,
+                meta: {
+                    data: {}
+                }
             }
         },
         components: {FileUpload, RenderTGAnalysis},
@@ -25,7 +28,7 @@
             getFileData: function (eventData) {
                 this.fileContent = this.getUploadedFileContent;
                 // no processing required over the raw file content provided
-                // this.meta.data = this.fileContent;
+                this.meta.data = this.fileContent;
                 // this now only contain branch names as keys
                 // this.meta.renderData = this.prepDataForRender(this.meta.data);
                 this.loaded = true;

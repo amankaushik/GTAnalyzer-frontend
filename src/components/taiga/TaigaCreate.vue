@@ -42,7 +42,7 @@
 </template>
 
 <script>
-    import CredentialSubmit from "@/components/CredentialSubmit";
+    import CredentialSubmit from "@/components/common/CredentialSubmit";
     import {mapGetters} from "vuex";
     import taigaService from "@/services/taigaService";
     import {csvFileParserMixin} from "@/mixins/csvFileParserMixin";

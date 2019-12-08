@@ -27,12 +27,10 @@
 </template>
 
 <script>
-    import RenderAnalysis from "@/components/RenderAnalysis";
     import {strategyMixin} from "@/mixins/strategyMixin";
 
     export default {
         name: "AnalyzeEntities",
-        components: {RenderAnalysis},
         props: {meta: Object, render: Object},
         mixins: [strategyMixin],
         data: function () {
@@ -101,32 +99,9 @@
                 });
             },
             prepareRenderPropData: function () {
-                let meta = {
-                    userIcon: "mdi-github-circle",
-                    entityIcon: "mdi-source-branch",
-                    sourceIcon: "mdi-source-repository-multiple",
-                    data: this.response,
-                    renderData: {}
-                };
-                let localData = JSON.parse(JSON.stringify(meta.data));
-                // for each repository in the response
-                for (let source of Object.keys(localData)) {
-                    // remove the "pr_details", "start_date" and "end_date" keys
-                    delete localData[source]["pr_details"];
-                    delete localData[source]["start_date"];
-                    delete localData[source]["end_date"];
-                    // remove "error" and "failed"
-                    if (localData[source].hasOwnProperty("error"))
-                        delete localData[source]["error"];
-                    if (localData[source].hasOwnProperty("failed"))
-                        delete localData[source]["failed"];
-                    if (localData[source].hasOwnProperty("repo_name"))
-                        delete localData[source]["repo_name"];
-                    if (localData[source].hasOwnProperty("step"))
-                        delete localData[source]["step"];
-                }
-                meta.renderData = localData;
-                return meta;
+                let strategyManager = new this.StrategyManager(this.render.caller);
+                let strategy = strategyManager.strategy;
+                return  strategy.prepareRenderPropData(this.response);
             }
         }
     }

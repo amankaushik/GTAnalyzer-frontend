@@ -56,7 +56,7 @@
 <script>
     import {strategyMixin} from "@/mixins/strategyMixin";
     import {csvFileParserMixin} from "@/mixins/csvFileParserMixin";
-    import FileUpload from "@/components/FileUpload";
+    import FileUpload from "@/components/common/FileUpload";
     import {mapGetters} from "vuex";
 
     export default {

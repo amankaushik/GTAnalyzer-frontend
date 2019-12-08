@@ -3,16 +3,38 @@
         <v-card class="mx-auto">
             <v-toolbar color="indigo" dark>
                 <v-toolbar-title>Commit Calender</v-toolbar-title>
+                <v-spacer></v-spacer>
+                <v-menu bottom right>
+                    <template v-slot:activator="{ on }">
+                        <v-btn
+                                outlined
+                                v-on="on"
+                        >
+                            <span>{{ typeToLabel[calendarType] }}</span>
+                            <v-icon right>mdi-menu-down</v-icon>
+                        </v-btn>
+                    </template>
+                    <v-list>
+                        <v-list-item @click="calendarType = 'day'">
+                            <v-list-item-title>Day</v-list-item-title>
+                        </v-list-item>
+                        <v-list-item @click="calendarType = 'custom-weekly'">
+                            <v-list-item-title>Custom-Weekly</v-list-item-title>
+                        </v-list-item>
+                    </v-list>
+                </v-menu>
             </v-toolbar>
             <v-container fluid>
                 <v-sheet height="500" v-if="isCommitDataAvailable()">
                     <v-calendar
-                            type="custom-weekly"
+                            :type="calendarType"
                             :start="commits.startDate"
                             :end="commits.endDate"
                             :events="events"
                             @click:event="showEvent"
+                            @click:more="viewDay"
                             :event-color="getEventColor"
+                            v-model="focus"
                     ></v-calendar>
                     <v-menu
                             v-model="selectedOpen"
@@ -49,7 +71,7 @@
             </v-toolbar>
             <v-container fluid>
                 <v-row dense v-if="isCommitDataAvailable()">
-                    <v-col v-for="commit of commitData" :key="commit.sha">
+                    <v-col v-for="commit of commitData" v-bind:key="commit.sha">
                         <v-card class="mx-auto" max-width="400" v-if="hasError(commit)">
                             <v-card-title>
                                 Analysis Failed at Step - {{commit.step}}
@@ -126,9 +148,9 @@
             <v-toolbar color="indigo" dark>
                 <v-toolbar-title>PR Details</v-toolbar-title>
             </v-toolbar>
-            <v-container fluid v-for="role of [authorKey, reviewerKey, assigneeKey]" :key="role">
+            <v-container fluid v-for="(role, i) of [authorKey, reviewerKey, assigneeKey]" v-bind:key="role">
                 <v-row dense v-if="hasDoneThis(role)">
-                    <v-col v-for="pr of commits.data[role]" :key="pr">
+                    <v-col v-for="pr of commits.data[role]" v-bind:key="pr*Math.random()">
                         <v-card class="mx-auto" max-width="400">
                             <v-card-title>
                                 <v-icon large left>mdi-calendar-range</v-icon>
@@ -219,9 +241,19 @@
                 selectedEvent: {},
                 selectedElement: null,
                 selectedOpen: false,
+                calendarType: "custom-weekly",
+                focus: '',
+                typeToLabel: {
+                    day: 'Day',
+                    'custom-weekly': 'Custom-Weekly'
+                },
             }
         },
         methods: {
+            viewDay: function ({ date }) {
+                this.focus = date;
+                this.calendarType = 'day'
+            },
             isCommitDataAvailable: function () {
                 if (this.commitDataFlag || this.commits.data.hasOwnProperty(this.commitKey)) {
                     this.commitDataFlag = true;

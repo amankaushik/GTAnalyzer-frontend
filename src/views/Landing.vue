@@ -54,12 +54,12 @@
 </template>
 
 <script>
-    import GitHubAnalyze from "@/components/GitHubAnalyze";
-    import GitHubCreate from "@/components/GitHubCreate";
-    import GitHubVisualize from "@/components/GitHubVisualize";
-    import TaigaAnalyze from "@/components/TaigaAnalyze";
-    import TaigaCreate from "@/components/TaigaCreate";
-    import TaigaVisualize from "@/components/TaigaVisualize";
+    import GitHubAnalyze from "@/components/github/GitHubAnalyze";
+    import GitHubCreate from "@/components/github/GitHubCreate";
+    import GitHubVisualize from "@/components/github/GitHubVisualize";
+    import TaigaAnalyze from "@/components/taiga/TaigaAnalyze";
+    import TaigaCreate from "@/components/taiga/TaigaCreate";
+    import TaigaVisualize from "@/components/taiga/TaigaVisualize";
 
     export default {
         name: "landing",

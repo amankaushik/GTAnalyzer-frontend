@@ -60,10 +60,10 @@
 </template>
 
 <script>
-    import RenderCommits from "@/components/RenderCommits";
+    import RenderCommits from "@/components/github/RenderCommits";
 
     export default {
-        name: "RenderAnalysis",
+        name: "RenderGHAnalysis",
         components: {RenderCommits},
         data() {
             return {

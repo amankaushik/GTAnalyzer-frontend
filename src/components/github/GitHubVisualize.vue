@@ -6,9 +6,9 @@
 </template>
 
 <script>
-    import FileUpload from "@/components/FileUpload";
+    import FileUpload from "@/components/common/FileUpload";
     import {mapGetters} from "vuex";
-    import RenderAnalysis from "@/components/RenderAnalysis";
+    import RenderAnalysis from "@/components/github/RenderGHAnalysis";
 
     export default {
         data() {

@@ -4,9 +4,11 @@
             <v-stepper-header>
                 <v-stepper-step :complete="stepNumber > 1" step="1">Enter Credentials</v-stepper-step>
                 <v-divider></v-divider>
-                <v-stepper-step :complete="stepNumber > 2" step="2">Select Boards</v-stepper-step>
+                <v-stepper-step :complete="stepNumber > 2" step="2">Select Repositories</v-stepper-step>
                 <v-divider></v-divider>
-                <v-stepper-step step="3">Perform Analysis</v-stepper-step>
+                <v-stepper-step :complete="stepNumber > 3" step="3">Pick Date Range</v-stepper-step>
+                <v-divider></v-divider>
+                <v-stepper-step step="4">Perform Analysis</v-stepper-step>
             </v-stepper-header>
 
             <v-stepper-items>
@@ -15,7 +17,7 @@
                         <v-row justify="start">
                             <v-col md="4">
                                 <v-card class="grey lighten-5" outlined>
-                                    <credential-submit v-bind:caller="{name: taigaCaller}"></credential-submit>
+                                    <credential-submit v-bind:caller="{name: githubCaller}"></credential-submit>
                                 </v-card>
                             </v-col>
                         </v-row>
@@ -29,20 +31,33 @@
                     <v-container :fluid=true class="grey lighten-5">
                         <v-row justify="start">
                             <v-col>
-                                <lister v-bind:caller="{name: taigaCaller}"></lister>
+                                <lister v-bind:caller="{name: githubCaller}"></lister>
                             </v-col>
                         </v-row>
                     </v-container>
                     <v-btn color="error" @click="stepNumber = decrement(stepNumber)">Prev</v-btn>
-                    <v-btn color="success" @click="sendAnalysisRequest"
-                           :disabled="isVerified()"> Analyze
+                    <v-btn color="success" @click="stepNumber = increment(stepNumber)"
+                           :disabled="isVerified()">Next
                     </v-btn>
                 </v-stepper-content>
                 <v-stepper-content step="3">
                     <v-container :fluid=true class="grey lighten-5">
                         <v-row justify="start">
                             <v-col>
-                                <analyze-entities v-bind:meta="response" v-bind:render="{renderComponent, caller: taigaCaller}"></analyze-entities>
+                                <DateRangeSelector v-bind:caller="{name: githubCaller}"></DateRangeSelector>
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                    <v-btn color="error" @click="stepNumber = decrement(stepNumber)">Prev</v-btn>
+                    <v-btn color="success" @click="sendAnalysisRequest"
+                           :disabled="isVerified()">Analyze
+                    </v-btn>
+                </v-stepper-content>
+                <v-stepper-content step="4">
+                    <v-container :fluid=true class="grey lighten-5">
+                        <v-row justify="start">
+                            <v-col>
+                                <analyze-entities v-bind:meta="response" v-bind:render="{renderComponent, caller: githubCaller}"></analyze-entities>
                             </v-col>
                         </v-row>
                     </v-container>
@@ -55,32 +70,33 @@
 
 <script>
 
-    import CredentialSubmit from "@/components/CredentialSubmit";
-    import Lister from "@/components/Lister";
+    import CredentialSubmit from "@/components/common/CredentialSubmit";
+    import DateRangeSelector from "@/components/github/DateRangeSelector";
+    import Lister from "@/components/common/Lister";
+    import AnalyzeEntities from "@/components/common/AnalyzeEntities";
+    import RenderGHAnalysis from "@/components/github/RenderGHAnalysis";
     import {mapGetters, mapActions} from 'vuex';
-    import taigaService from "@/services/taigaService";
-    import AnalyzeEntities from "@/components/AnalyzeEntities";
-    import RenderTGAnalysis from "@/components/RenderTGAnalysis";
+    import githubService from "@/services/githubService";
 
     export default {
-        name: 'TaigaAnalyze',
-        components: {AnalyzeEntities, CredentialSubmit, Lister},
+        name: 'GitHubAnalyze',
+        components: {DateRangeSelector, AnalyzeEntities, CredentialSubmit, Lister},
         data: function () {
             return {
                 stepNumber: 1,
-                maxStepNumber: 3,
+                maxStepNumber: 4,
                 minStepNumber: 1,
                 username: '',
-                password: '',
-                taigaCaller: process.env.VUE_APP_CALLER_TAIGA,
-                response: null,
-                renderComponent: RenderTGAnalysis
+                token: '',
+                githubCaller: process.env.VUE_APP_CALLER_GITHUB,
+                renderComponent: RenderGHAnalysis,
+                response: null
             }
         },
         methods: {
-            ...mapActions('taigaCredentialStore', ['setAuthToken', 'setUsername',
-                'setUserId', 'setPassword', 'setVerified']),
-            ...mapActions('centralStore', ['setTGAnalysisRequested', 'setTGPayload']),
+            ...mapActions('githubCredentialStore',
+                ['setToken', 'setUsername', 'setVerified']),
+            ...mapActions('centralStore', ['setGHAnalysisRequested']),
             increment: function (step) {
                 this.setFromState();
                 this.setVerified(false); // disable the 'Next' button on the "next" page
@@ -88,28 +104,14 @@
                     return step;
                 return step + 1;
             },
-            makeTGAnalysisPayload: function() {
-                let payload = {};
-                payload["auth_token"] = this.getAuthToken;
-                payload["board_names"] = [];
-                for (let name of this.getSelectedBoards) {
-                    payload["board_names"].push(
-                        {
-                            "name": name
-                        }
-                    )
-                }
-                return payload;
-            },
             sendAnalysisRequest: function () {
                 let vueThis = this;
-                this.setTGPayload(this.makeTGAnalysisPayload());
-                taigaService.performAnalysis(this.getTGPayload)
+                githubService.performAnalysis(this.getGHPayload)
                     .then(response => {
                         vueThis.response = response.data;
                         // new analysis requested
                         // set central value for analysis requested, this is used to track request state
-                        vueThis.setTGAnalysisRequested(true);
+                        vueThis.setGHAnalysisRequested(true);
                     }).catch(error => {
                     console.log(error);
                 });
@@ -124,15 +126,13 @@
                 return !this.getVerified;
             },
             setFromState: function () {
-                this.password = this.getPassword;
-                this.username = this.getUsername;
+                this.token = this.getToken;
+                this.username = this.getUsername
             }
         },
         computed: {
-            ...mapGetters('taigaCredentialStore', ['getAuthToken', 'getUsername',
-                'getUserId', 'getPassword', 'getVerified']),
-            ...mapGetters('centralStore', ['getTGPayload']),
-            ...mapGetters('boardDataStore', ['getSelectedBoards'])
+            ...mapGetters('githubCredentialStore', ['getToken', 'getUsername', 'getVerified']),
+            ...mapGetters('centralStore', ['getGHPayload']),
         }
     }
 </script>

@@ -51,11 +51,11 @@
 </template>
 
 <script>
-    import CredentialSubmit from "@/components/CredentialSubmit";
+    import CredentialSubmit from "@/components/common/CredentialSubmit";
     import {mapGetters, mapActions} from 'vuex';
     import taigaService from "@/services/taigaService";
     import {csvFileParserMixin} from "@/mixins/csvFileParserMixin";
-    import FileUpload from "@/components/FileUpload";
+    import FileUpload from "@/components/common/FileUpload";
 
     export default {
         name: "DateRangeSelector",
@@ -113,9 +113,6 @@
             ...mapActions('githubCredentialStore',
                 ['setVerified']),
             ...mapActions('taigaCredentialStore', {'taigaSetVerified': 'setVerified'}),
-            isFileUploaded: function () {
-                return !(this.files === null || this.files.empty || this.files.length !== 1);
-            },
             getDateRange: function (data) {
                 return data["estimated_start"] + '~' + data["estimated_finish"]
             },
@@ -137,12 +134,12 @@
                         };
                         taigaService.getMilestones(vueThis.getAuthToken, content[1])
                             .then(response => {
-                                _tmp["milestones"] = response.data
+                                _tmp["selected"] = vueThis.getDateRange( // default selection
+                                    _tmp["milestones"][0]
+                                );    _tmp["milestones"] = response.data;
+                                vueThis.payloadRepoNames.push(_tmp); // only push if milestones available
                             }).catch(error => {
-                            _tmp["milestones"] = [];
                             console.log(error);
-                        }).finally(() => {
-                            vueThis.payloadRepoNames.push(_tmp);
                         })
                     }
                 }
@@ -156,7 +153,7 @@
                 // get date range from Taiga
                 if (this.criteria === "auto")
                     return true;
-                // select date range
+                // select date range from date picker
                 if (this.criteria === "manual")
                     return false;
             },
